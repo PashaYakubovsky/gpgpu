@@ -1,6 +1,7 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import Stats from "three/examples/jsm/libs/stats.module";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
+import Stats from "three/examples/jsm/libs/stats.module.js";
+
 import fragmentShader from "./shaders/fragment.glsl";
 import vertexShader from "./shaders/vertex.glsl";
 import simFragmentShader from "./shaders/simFragment.glsl";
