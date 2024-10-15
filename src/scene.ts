@@ -7,7 +7,6 @@ import simFragmentShader from "./shaders/simFragment.glsl";
 import simVertexShader from "./shaders/simVertex.glsl";
 import gui from "lil-gui";
 
-import textExample from "./assets/61734.png";
 import text2Example from "./assets/exampl.jpg";
 
 const lerp = (start: number, end: number, t: number) => {
@@ -33,10 +32,10 @@ class Scene {
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private controls: OrbitControls;
-    private plane?: THREE.Points;
     private planeMaterial?: THREE.ShaderMaterial;
     private rafId?: number;
-    private positions?: THREE.DataTexture;
+    private positionsSampled?: THREE.DataTexture;
+    private positionsSampled2?: THREE.DataTexture;
     private geometry?: THREE.BufferGeometry;
     private fboScene?: THREE.Scene;
     private fboCamera?: THREE.OrthographicCamera;
@@ -229,7 +228,6 @@ class Scene {
             THREE.FloatType
         );
         texture.needsUpdate = true;
-        this.positions = texture;
 
         const geo = new THREE.BufferGeometry();
 
@@ -290,7 +288,7 @@ class Scene {
         const x = (event.clientX / window.innerWidth) * 2 - 1;
         const y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        if (this.raycaster) {
+        if (this.raycaster && this.raycastPlane) {
             this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
             const intersects = this.raycaster.intersectObjects([this.raycastPlane]);
 
@@ -348,7 +346,6 @@ class Scene {
         });
         const plane = new THREE.Points(this.geometry, material);
         plane.position.z = 0;
-        this.plane = plane;
         this.planeMaterial = material;
         this.scene.add(plane);
 
