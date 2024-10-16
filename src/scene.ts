@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
@@ -18,24 +19,6 @@ const lerp = (start: number, end: number, t: number) => {
     return start * (1 - t) + end * t;
 };
 
-const randomizeMatrix = (function () {
-    const position = new THREE.Vector3();
-    const quaternion = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-
-    return function (matrix: THREE.Matrix4) {
-        position.x = Math.random() * 40 - 20;
-        position.y = Math.random() * 40 - 20;
-        position.z = Math.random() * 40 - 20;
-
-        quaternion.random();
-
-        scale.x = scale.y = scale.z = Math.random() * 1;
-
-        matrix.compose(position, quaternion, scale);
-    };
-})();
-
 const loadImage = (path: string) => {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -55,10 +38,8 @@ class Scene {
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private controls: OrbitControls;
-    private planeMaterial?: THREE.ShaderMaterial;
     private rafId?: number;
     private positionsSampled?: THREE.DataTexture;
-    private geometry?: THREE.BufferGeometry;
     private raycaster?: THREE.Raycaster;
     private raycastPlane?: THREE.Mesh;
     private gui?: gui;
@@ -71,7 +52,6 @@ class Scene {
     private velocityVariable?: Variable;
 
     private leePerrySmith!: THREE.Mesh;
-    private points?: THREE.Points;
     private sampler!: MeshSurfaceSampler;
     private position!: THREE.Vector3;
     private matrix!: THREE.Matrix4;
@@ -254,7 +234,7 @@ class Scene {
         const x = (event.clientX / window.innerWidth) * 2 - 1;
         const y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        if (this.raycaster) {
+        if (this.raycaster && this.raycastPlane) {
             this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
             const intersects = this.raycaster.intersectObjects([this.raycastPlane]);
 
@@ -349,7 +329,6 @@ class Scene {
 
     clock = new THREE.Clock();
     private animate() {
-        const delta = this.clock.getDelta();
         const elapsedTime = this.clock.getElapsedTime();
         this.gpuCompute.compute();
         this.renderer.render(this.scene, this.camera);
@@ -368,12 +347,17 @@ class Scene {
         //     ).texture;
         // }
 
-        if (this.mesh) {
+        if (this.mesh?.material) {
+            // @ts-ignore
             this.mesh.material.uniforms.time.value = elapsedTime;
+            // @ts-ignore
             this.mesh.material.uniforms.uTexture.value = this.gpuCompute.getCurrentRenderTarget(
+                // @ts-ignore
                 this.positionVariable
             ).texture;
+            // @ts-ignore
             this.mesh.material.uniforms.uVelocity.value = this.gpuCompute.getCurrentRenderTarget(
+                // @ts-ignore
                 this.velocityVariable
             ).texture;
         }
@@ -402,16 +386,7 @@ class Scene {
     }
 
     makeInstanced(geometry: THREE.BufferGeometry, material: THREE.Material) {
-        const matrix = new THREE.Matrix4();
         this.mesh = new THREE.InstancedMesh(geometry, material, this.count);
-
-        // for (let i = 0; i < this.count; i++) {
-        //     // get position for a this.positionsSampled
-
-        //     randomizeMatrix(matrix);
-        //     this.mesh.setMatrixAt(i, matrix);
-        // }
-
         this.scene.add(this.mesh);
     }
 
