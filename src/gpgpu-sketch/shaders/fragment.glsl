@@ -19,6 +19,11 @@ void main() {
     vec4 color = texture2D(uTexture, vUv);
     vec4 velocity = texture2D(uVelocity, vUv);
 
-    gl_FragColor = matcapColor;
+    vec4 final = vec4(vec3(0.0), 0.0);
+
+    final = mix(final , matcapColor, 0.1 + velocity.y * 1000.);
+
+    gl_FragColor = final;
+    // gl_FragColor = matcapColor;
     
 }
