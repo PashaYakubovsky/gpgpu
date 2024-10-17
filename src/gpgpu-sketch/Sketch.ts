@@ -23,9 +23,11 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
+import { RGBShiftShader } from "three/examples/jsm/Addons.js";
 
 import gui from "lil-gui";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
+import gsap from "gsap";
 
 const lerp = (start: number, end: number, t: number) => {
     return start * (1 - t) + end * t;
@@ -50,7 +52,7 @@ class Scene {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
-    private controls: OrbitControls;
+    private controls: MapControls;
     private rafId?: number;
     private positionsSampled?: THREE.DataTexture;
     private positionsSampled2?: THREE.DataTexture;
@@ -81,7 +83,7 @@ class Scene {
     private fxaaPass?: ShaderPass;
 
     debugObj = {
-        progress: 0.001,
+        progress: 0.002,
     };
 
     size = 512;
@@ -107,12 +109,11 @@ class Scene {
 
         this.container.appendChild(this.renderer.domElement);
 
-        this.camera.position.set(0, 2, 5);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        // this.controls.enableDamping = true;
-        this.controls = new MapControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
+        this.camera.position.set(3, 4, -3);
+        this.camera.updateProjectionMatrix();
 
         const draco = new DRACOLoader();
         draco.setDecoderConfig({ type: "js" });
@@ -136,6 +137,17 @@ class Scene {
             this.animate();
 
             window.addEventListener("resize", this.resize.bind(this));
+        });
+    }
+
+    centerMap() {
+        // animate camera to center of the map
+        gsap.to(this.camera.position, {
+            x: 0,
+            y: 5,
+            z: 5,
+            duration: 1.5,
+            ease: "power2.inOut",
         });
     }
 
@@ -176,40 +188,56 @@ class Scene {
         const gltf = this.gltfObject;
         if (!gltf) return;
 
-        const mixer = new THREE.AnimationMixer(this.scene);
-        this.mixer = mixer;
+        this.controls = new MapControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.zoomSpeed = 0.5;
 
-        this.camera = gltf.scene.children.find(
-            child => child instanceof THREE.Camera
-        ) as THREE.PerspectiveCamera;
-
-        this.camera.name = "Camera";
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.fov = 80;
-        this.camera.near = 0.01;
-        this.camera.far = 1000;
-        this.camera.updateProjectionMatrix();
-
-        const clips = gltf.animations;
-
-        const action = mixer.clipAction(clips[0]);
-
-        action.loop = THREE.LoopOnce;
-        action.clampWhenFinished = true;
-        action.timeScale = 1.5;
-        action.play();
-
-        this.mixer.addEventListener("finished", () => {
-            // this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-            // this.controls.enableDamping = true;
-            this.controls = new MapControls(this.camera, this.renderer.domElement);
-            this.controls.enableDamping = true;
+        setTimeout(() => {
             if (this.positionUniforms && this.velocityUniforms) {
                 this.debugObj.progress = 0.0;
                 this.positionUniforms.uProgress.value = this.debugObj.progress;
                 this.velocityUniforms.uProgress.value = this.debugObj.progress;
             }
-        });
+        }, 2000);
+
+        // const mixer = new THREE.AnimationMixer(this.scene);
+        // this.mixer = mixer;
+
+        // this.camera = gltf.scene.children.find(
+        //     child => child instanceof THREE.Camera
+        // ) as THREE.PerspectiveCamera;
+
+        // this.camera.name = "Camera";
+        // this.camera.aspect = window.innerWidth / window.innerHeight;
+        // this.camera.fov = 80;
+        // this.camera.near = 0.01;
+        // this.camera.far = 1000;
+        // this.camera.updateProjectionMatrix();
+
+        // const clips = gltf.animations;
+        // const action = mixer.clipAction(clips[0]);
+        // action.loop = THREE.LoopOnce;
+        // action.clampWhenFinished = true;
+        // action.timeScale = 1.33;
+        // action.play();
+
+        // this.mixer.addEventListener("finished", () => {
+        //     // this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        //     // this.controls.enableDamping = true;
+        //     if (this.controls) {
+        //         this.controls.dispose();
+        //     }
+        //     this.controls = new MapControls(this.camera, this.renderer.domElement);
+        //     this.controls.enableDamping = true;
+        //     this.controls.zoomSpeed = 0.5;
+        //     this.controls.target.set(0, 0, 0);
+
+        //     if (this.positionUniforms && this.velocityUniforms) {
+        //         this.debugObj.progress = 0.0;
+        //         this.positionUniforms.uProgress.value = this.debugObj.progress;
+        //         this.velocityUniforms.uProgress.value = this.debugObj.progress;
+        //     }
+        // });
     }
 
     fillVelocityTexture(texture: THREE.DataTexture) {
@@ -357,23 +385,29 @@ class Scene {
     private gltfLoader: GLTFLoader;
 
     addLight() {
-        const rectLight1 = new THREE.RectAreaLight("#fff", 2, 9, 10);
+        const rectLight1 = new THREE.RectAreaLight("#fff", 3, 9, 10);
         rectLight1.position.set(0, 5, 5);
         rectLight1.rotateX(-Math.PI / 4);
         this.rectLight1 = rectLight1;
         this.scene.add(rectLight1);
 
-        // const rectLight2 = new THREE.RectAreaLight("#fff", 5, 4, 10);
-        // rectLight2.position.set(0, 5, 5);
-        // this.scene.add(rectLight2);
+        const dirLight = new THREE.DirectionalLight("#fff", 10);
+        dirLight.position.set(0, 0, -2);
+        dirLight.lookAt(0, 0, 0);
+        dirLight.castShadow = false;
 
-        // const rectLight3 = new THREE.RectAreaLight("#fff", 5, 4, 10);
-        // rectLight3.position.set(5, 5, 5);
-        // this.scene.add(rectLight3);
+        //Set up shadow properties for the light
+        dirLight.shadow.mapSize.width = 512; // default
+        dirLight.shadow.mapSize.height = 512; // default
+        dirLight.shadow.camera.near = -10; // default
+        dirLight.shadow.camera.far = 5; // default
 
-        this.scene.add(new RectAreaLightHelper(rectLight1));
-        // this.scene.add(new RectAreaLightHelper(rectLight2));
-        // this.scene.add(new RectAreaLightHelper(rectLight3));
+        dirLight.shadow.camera.left = -5;
+        dirLight.shadow.camera.right = 5;
+        dirLight.shadow.camera.top = 5;
+        dirLight.shadow.camera.bottom = -5;
+
+        this.scene.add(dirLight);
     }
 
     setupPostProcessing() {
@@ -385,8 +419,19 @@ class Scene {
         const fxaaPass = new ShaderPass(FXAAShader);
         fxaaPass.material.uniforms["resolution"].value.x = 1 / window.innerWidth;
         fxaaPass.material.uniforms["resolution"].value.y = 1 / window.innerHeight;
-
         composer.addPass(fxaaPass);
+
+        const rgbShift = new ShaderPass(RGBShiftShader);
+        rgbShift.enabled = true;
+        rgbShift.material.uniforms["amount"].value = 0.01;
+
+        gsap.to(rgbShift.material.uniforms["amount"], {
+            value: 0.0,
+            duration: 2,
+            ease: "power2.inOut",
+        });
+
+        composer.addPass(rgbShift);
 
         this.composer = composer;
         this.fxaaPass = fxaaPass;
@@ -400,10 +445,10 @@ class Scene {
             "/city.glb"
         );
 
+        gltf.scene.rotateY(Math.PI);
+        mergedMesh.rotateY(Math.PI);
+        mergedMesh.geometry.rotateY(Math.PI);
         this.scene.add(gltf.scene);
-
-        // mergedMesh.scale.set(3, 3, 3);
-        // mergedMesh.geometry.scale(3, 3, 3);
 
         this.targetObject = mergedMesh;
         this.gltfObject = gltf;
@@ -439,10 +484,9 @@ class Scene {
             fragmentShader,
             vertexShader: vertexInstanceShader,
             transparent: true,
-            blending: THREE.AdditiveBlending,
         });
 
-        this.geometryInstanced = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+        this.geometryInstanced = new THREE.BoxGeometry(0.1, 0.1, 0.1);
         const uvInstanced = new Float32Array(this.count * 2);
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
@@ -464,24 +508,26 @@ class Scene {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+        if (this.fxaaPass) {
+            this.fxaaPass.material.uniforms["resolution"].value.x = 1 / window.innerWidth;
+            this.fxaaPass.material.uniforms["resolution"].value.y = 1 / window.innerHeight;
+        }
     }
 
     clock = new THREE.Clock();
     private animate() {
         const elapsedTime = this.clock.getElapsedTime();
         this.gpuCompute.compute();
+
         if (this.composer) {
             this.composer.render();
         } else {
             this.renderer.render(this.scene, this.camera);
         }
-
         if (this.mixer) {
-            this.mixer.update(0.005);
+            this.mixer.update(0.01);
         }
-        // if (this.rectLight1) {
-        //     this.rectLight1.position.y = 2 + 2 * Math.cos(elapsedTime);
-        // }
         if (this.positionUniforms) {
             this.positionUniforms.time.value = elapsedTime;
         }
@@ -646,26 +692,29 @@ class GeometryMerger {
 
         scene.traverse(child => {
             if (child instanceof THREE.Mesh) {
-                if (child.name === "group678473692") return;
-                // Ensure the geometry has an index buffer
-                let geometry = child.geometry;
-                if (!geometry.index) {
-                    geometry = geometry.toNonIndexed();
+                if (child.name !== "group678473692") {
+                    // Ensure the geometry has an index buffer
+                    let geometry = child.geometry;
+                    if (!geometry.index) {
+                        geometry = geometry.toNonIndexed();
+                    }
+                    geometries.push(geometry);
+                    child.material = material;
+                    child.castShadow = true;
+                    child.receiveShadow = true;
                 }
-                geometries.push(geometry);
-                child.material = material;
+                child.geometry.scale(3, 3, 3);
             }
         });
 
         const floor = scene.getObjectByName("group678473692") as THREE.Mesh;
-
-        floor.material = new THREE.MeshPhysicalMaterial({
-            color: new THREE.Color("black"),
+        floor.receiveShadow = true;
+        floor.castShadow = false;
+        floor.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color("gray"),
             roughness: 0.9,
-            metalness: 0.1,
-            // transparent: true,
+            metalness: 0,
             side: THREE.DoubleSide,
-            map: new THREE.TextureLoader().load(matcap),
         });
 
         const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);

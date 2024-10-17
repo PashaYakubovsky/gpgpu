@@ -33,10 +33,10 @@ void main() {
 
     // mouse repel force
     float mouseDistance = distance( final, uMouse );
-    float maxDistance = 0.31;
+    float maxDistance = 0.51;
     if( mouseDistance < maxDistance ) {
         vec3 direction = normalize( final - uMouse );
-        velocity += direction * ( 1.0 - mouseDistance / maxDistance ) * 0.01;
+        velocity += direction * ( 2. - mouseDistance / maxDistance ) * 0.005;
     }
 
     gl_FragColor = vec4(velocity, 1.0);

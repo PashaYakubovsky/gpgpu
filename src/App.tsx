@@ -9,7 +9,7 @@ enum SketchList {
 }
 
 function App() {
-    const [active, setActive] = useState<SketchList>(SketchList["Particle emitter"]);
+    const [active, setActive] = useState<SketchList>(SketchList.GPGPU);
     const currentSketch = useRef<
         (FboSketch & { name: string }) | (GPGPUSketch & { name: string }) | null
     >(null);
@@ -17,7 +17,8 @@ function App() {
     useEffect(() => {
         const query = window.location.search;
         const urlParams = new URLSearchParams(query);
-        const active = urlParams.get("active") as "Particle emitter" | "GPGPU";
+        const active = urlParams.get("active") || SketchList.GPGPU;
+        setActive(active as SketchList);
 
         if (active === SketchList["Particle emitter"]) {
             const sketch = new FboSketch({ dom: document.querySelector("#root")! });
@@ -72,6 +73,16 @@ function App() {
                     {SketchList["GPGPU"]}
                 </button>
             </nav>
+
+            {active === "GPGPU" && (
+                <button
+                    className="center"
+                    onClick={() => {
+                        if (currentSketch.current) currentSketch.current.centerMap();
+                    }}>
+                    Center map
+                </button>
+            )}
         </>
     );
 }
