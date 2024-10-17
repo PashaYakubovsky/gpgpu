@@ -30,7 +30,7 @@ void main() {
     if(length(velocity.xyz) < 0.0001) {
         velocity.xyz = vec3(0,0.0001, 0.0001);
     }
-    transformed.y *= max(1.0, length(velocity.xyz) * 10.);
+    transformed.y *= max(1.0, length(velocity.xyz) * 53.);
     transformed = rotate3D(transformed, velocity.xyz );
 
     vec3 newpos = color.xyz;

@@ -60,6 +60,18 @@ function App() {
 
     return (
         <>
+            <div className="controls">
+                {active === "GPGPU" && (
+                    <button
+                        className="center"
+                        onClick={() => {
+                            const sketch = currentSketch.current as GPGPUSketch;
+                            sketch.centerMap();
+                        }}>
+                        Center map
+                    </button>
+                )}
+            </div>
             <nav className="navigation">
                 <button
                     className={active === "Particle emitter" ? "active" : ""}
@@ -73,17 +85,6 @@ function App() {
                     {SketchList["GPGPU"]}
                 </button>
             </nav>
-
-            {active === "GPGPU" && (
-                <button
-                    className="center"
-                    onClick={() => {
-                        const sketch = currentSketch.current as GPGPUSketch;
-                        sketch.centerMap();
-                    }}>
-                    Center map
-                </button>
-            )}
         </>
     );
 }

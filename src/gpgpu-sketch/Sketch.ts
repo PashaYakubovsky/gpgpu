@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { MapControls } from "three/addons/controls/MapControls.js";
 
 import Stats from "three/examples/jsm/libs/stats.module.js";
@@ -8,8 +7,18 @@ import { GPUComputationRenderer, Variable } from "three/addons/misc/GPUComputati
 import { GLTF, GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
-import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
+
+// import {
+//     color,
+//     fog,
+//     float,
+//     positionWorld,
+//     triNoise3D,
+//     positionView,
+//     normalWorld,
+//     uniform,
+// } from "three/tsl";
 
 import fragmentShader from "./shaders/fragment.glsl";
 import vertexInstanceShader from "./shaders/vertexInstance.glsl";
@@ -79,11 +88,12 @@ class Scene {
     private mixer: THREE.AnimationMixer | null = null;
 
     private rectLight1?: THREE.RectAreaLight;
+    private rectLight2?: THREE.RectAreaLight;
     private composer?: EffectComposer;
     private fxaaPass?: ShaderPass;
 
     debugObj = {
-        progress: 0.002,
+        progress: 0.01,
     };
 
     size = 512;
@@ -107,13 +117,14 @@ class Scene {
         this.renderer.setClearColor(0x000000, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-        this.container.appendChild(this.renderer.domElement);
-
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        // this.renderer.shadowMap.enabled = true;
+        // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.setPixelRatio(Math.max(2, window.devicePixelRatio));
 
         this.camera.position.set(3, 4, -3);
         this.camera.updateProjectionMatrix();
+
+        this.container.appendChild(this.renderer.domElement);
 
         const draco = new DRACOLoader();
         draco.setDecoderConfig({ type: "js" });
@@ -131,9 +142,14 @@ class Scene {
             this.addLight();
             this.initGPGPU();
             this.setupRaycaster();
-            this.setupDebug();
             this.setupMixer();
+
+            this.centerMap();
+            this.setupFog();
             this.setupPostProcessing();
+
+            this.setupDebug();
+
             this.animate();
 
             window.addEventListener("resize", this.resize.bind(this));
@@ -176,12 +192,59 @@ class Scene {
             )
             .name("Toggle Stats");
 
-        this.gui.domElement.style.position = "absolute";
-        this.gui.domElement.style.zIndex = "100";
+        // wireframe
+        this.gui.add(this.mesh?.material, "wireframe").name("Wireframe cubes");
+        this.gui.add(this.targetObject.material, "wireframe").name("Wireframe buildings");
+
+        // fog
+        this.gui.add(this.scene.fog, "near", 0, 50).name("Fog near");
+        this.gui.add(this.scene.fog, "far", 0, 50).name("Fog far");
+
+        // lights
+        this.gui.add(this.rectLight1, "intensity", 0, 10).name("Light 1 intensity");
+        this.gui.add(this.rectLight2, "intensity", 0, 10).name("Light 2 intensity");
 
         this.stats = new Stats();
         this.stats.showPanel(0);
         document.body.appendChild(this.stats.dom);
+    }
+
+    setupFog() {
+        // custom fog
+
+        // const skyColor = color(0xf0f5f5);
+        // const groundColor = color(0xd0dee7);
+
+        // const fogNoiseDistance = positionView.z.negate().smoothstep(0, 100);
+        // const distance = fogNoiseDistance.mul(20).max(4);
+        // const alpha = 0.98;
+        // const groundFogArea = float(distance)
+        //     .sub(positionWorld.y)
+        //     .div(distance)
+        //     .pow(3)
+        //     .saturate()
+        //     .mul(alpha);
+
+        // // a alternative way to create a TimerNode
+        // const timer = uniform(0).onFrameUpdate(frame => frame.time);
+
+        // const fogNoiseA = triNoise3D(positionWorld.mul(0.005), 0.2, timer);
+        // const fogNoiseB = triNoise3D(positionWorld.mul(0.01), 0.2, timer.mul(1.2));
+
+        // const fogNoise = fogNoiseA.add(fogNoiseB).mul(groundColor);
+
+        // // apply custom fog
+
+        // this.scene.fogNode = fog(
+        //     fogNoiseDistance.oneMinus().mix(groundColor, fogNoise),
+        //     groundFogArea
+        // );
+        // this.scene.backgroundNode = normalWorld.y.max(0).mix(groundColor, skyColor);
+
+        // this.scene.fog = new THREE.FogExp2(0xefd1b5, 0.0025);
+        // this.scene.fog.density = 0.001;
+
+        this.scene.fog = new THREE.Fog(new THREE.Color("red"), 5, 50);
     }
 
     setupMixer() {
@@ -385,29 +448,42 @@ class Scene {
     private gltfLoader: GLTFLoader;
 
     addLight() {
-        const rectLight1 = new THREE.RectAreaLight("#fff", 3, 9, 10);
-        rectLight1.position.set(0, 5, 5);
+        const rectLight1 = new THREE.RectAreaLight("white", 3, 20, 20);
+        rectLight1.position.set(0, 10, 5);
         rectLight1.rotateX(-Math.PI / 4);
         this.rectLight1 = rectLight1;
         this.scene.add(rectLight1);
 
-        const dirLight = new THREE.DirectionalLight("#fff", 10);
-        dirLight.position.set(0, 0, -2);
-        dirLight.lookAt(0, 0, 0);
-        dirLight.castShadow = false;
+        const rectLight2 = new THREE.RectAreaLight("red", 3, 20, 20);
+        rectLight2.position.set(10, 10, -10);
+        rectLight2.rotateX(-Math.PI / 2);
+        this.scene.add(rectLight2);
+        this.rectLight2 = rectLight2;
 
-        //Set up shadow properties for the light
-        dirLight.shadow.mapSize.width = 512; // default
-        dirLight.shadow.mapSize.height = 512; // default
-        dirLight.shadow.camera.near = -10; // default
-        dirLight.shadow.camera.far = 5; // default
+        // helpres
+        // const helper1 = new RectAreaLightHelper(rectLight1);
+        // this.scene.add(helper1);
 
-        dirLight.shadow.camera.left = -5;
-        dirLight.shadow.camera.right = 5;
-        dirLight.shadow.camera.top = 5;
-        dirLight.shadow.camera.bottom = -5;
+        // const helper2 = new RectAreaLightHelper(rectLight2);
+        // this.scene.add(helper2);
 
-        this.scene.add(dirLight);
+        // const dirLight = new THREE.DirectionalLight("#fff", 10);
+        // dirLight.position.set(0, 0, -2);
+        // dirLight.lookAt(0, 0, 0);
+        // dirLight.castShadow = false;
+
+        // //Set up shadow properties for the light
+        // dirLight.shadow.mapSize.width = 512; // default
+        // dirLight.shadow.mapSize.height = 512; // default
+        // dirLight.shadow.camera.near = -10; // default
+        // dirLight.shadow.camera.far = 5; // default
+
+        // dirLight.shadow.camera.left = -5;
+        // dirLight.shadow.camera.right = 5;
+        // dirLight.shadow.camera.top = 5;
+        // dirLight.shadow.camera.bottom = -5;
+
+        // this.scene.add(dirLight);
     }
 
     setupPostProcessing() {
@@ -487,6 +563,9 @@ class Scene {
         });
 
         this.geometryInstanced = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+
+        // create a random vertices to instances geometry
+
         const uvInstanced = new Float32Array(this.count * 2);
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
@@ -575,7 +654,6 @@ class Scene {
 
     makeInstanced(geometry: THREE.BufferGeometry, material: THREE.Material) {
         this.mesh = new THREE.InstancedMesh(geometry, material, this.count);
-        this.mesh.frustumCulled = true;
         this.scene.add(this.mesh);
     }
 
@@ -679,15 +757,15 @@ class GeometryMerger {
         matcapTexture.mapping = THREE.EquirectangularReflectionMapping;
 
         const material = new THREE.MeshPhysicalMaterial({
-            color: new THREE.Color("white"),
+            color: new THREE.Color("black"),
             roughness: 0.3,
-            metalness: 0.8,
+            metalness: 1,
             // transparent: true,
             side: THREE.DoubleSide,
+            envMap: matcapTexture,
             // ior: 2.1,
-            map: matcapTexture,
-            emissive: new THREE.Color("white"),
-            emissiveIntensity: 0.05,
+            // emissive: new THREE.Color("white"),
+            // emissiveIntensity: 0.05,
         });
 
         scene.traverse(child => {
@@ -711,7 +789,7 @@ class GeometryMerger {
         floor.receiveShadow = true;
         floor.castShadow = false;
         floor.material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color("gray"),
+            color: new THREE.Color("#000333"),
             roughness: 0.9,
             metalness: 0,
             side: THREE.DoubleSide,

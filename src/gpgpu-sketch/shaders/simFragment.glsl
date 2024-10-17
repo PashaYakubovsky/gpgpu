@@ -12,7 +12,7 @@ void main() {
     vec4 destination = texture2D(uPositionToTexture, uv);
 
     // mix the position with the destination based on progress
-    vec4 projectedPosition = position + velocity;
+    vec4 projectedPosition = position + velocity * 5.1;
     vec4 final = mix(projectedPosition, destination, uProgress);
 
     // final.xyz += velocity.xyz;

@@ -22,21 +22,21 @@ void main() {
     // vec3 projectedDestination = destination + velocity;
     vec3 final = mix(position,destination, uProgress);
 
-    velocity *= 0.9;
+    velocity *= 0.91;
 
     // particle attraction to shape force
     vec3 direction = normalize( original - final );
     float dist = length( original - final );
     if( dist > 0.1) {
-        velocity += direction  * 0.001;
+        velocity += direction  * 0.1 * (1.0 - uProgress) * 0.01;
     }
 
     // mouse repel force
     float mouseDistance = distance( final, uMouse );
-    float maxDistance = 0.51;
+    float maxDistance = 0.66;
     if( mouseDistance < maxDistance ) {
         vec3 direction = normalize( final - uMouse );
-        velocity += direction * ( 2. - mouseDistance / maxDistance ) * 0.005;
+        velocity += direction * 0.01 * (0.1 + uProgress) * 0.77;
     }
 
     gl_FragColor = vec4(velocity, 1.0);

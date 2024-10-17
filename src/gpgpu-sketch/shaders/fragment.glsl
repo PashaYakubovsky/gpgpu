@@ -21,7 +21,7 @@ void main() {
 
     vec4 final = vec4(vec3(0.0), 0.0);
 
-    final = mix(final , matcapColor, 0.1 + velocity.y * 333.);
+    final = mix(final , matcapColor,  velocity.y * 633.);
 
     gl_FragColor = final;
     // gl_FragColor = matcapColor;

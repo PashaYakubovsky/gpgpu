@@ -38,11 +38,13 @@ body {
     padding: 0.5rem 0;
     background-color: transparent;
     position: fixed;
+    width: fit-content;
     bottom: 0;
     left: 0;
-    width: 100%;
+    z-index: 1;
 }
-.navigation button {
+.navigation button,
+.controls button {
     padding: 0.5rem;
     background-color: transparent;
     border: 1px solid rgba(255, 255, 255, 0.87);
@@ -55,4 +57,11 @@ body {
 .navigation button.active {
     background-color: rgba(255, 255, 255, 0.87);
     color: #242424;
+}
+.controls {
+    position: fixed;
+    bottom: 0;
+    padding: 0.5rem;
+    right: 0;
+    z-index: 1;
 }
