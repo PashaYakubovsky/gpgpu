@@ -78,7 +78,8 @@ function App() {
                 <button
                     className="center"
                     onClick={() => {
-                        if (currentSketch.current) currentSketch.current.centerMap();
+                        const sketch = currentSketch.current as GPGPUSketch;
+                        sketch.centerMap();
                     }}>
                     Center map
                 </button>
