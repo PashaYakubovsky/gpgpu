@@ -91,6 +91,7 @@ class Scene {
     private rectLight2?: THREE.RectAreaLight;
     private composer?: EffectComposer;
     private fxaaPass?: ShaderPass;
+    private rgbShift?: ShaderPass;
 
     debugObj = {
         progress: 0.01,
@@ -203,6 +204,29 @@ class Scene {
         // lights
         this.gui.add(this.rectLight1, "intensity", 0, 10).name("Light 1 intensity");
         this.gui.add(this.rectLight2, "intensity", 0, 10).name("Light 2 intensity");
+
+        // post processing
+        const obj = {
+            rgbShift: true,
+            fxaa: true,
+        };
+        const folder = this.gui.addFolder("Post Processing");
+        folder
+            .add(obj, "fxaa")
+            .name("FXAA enabled")
+            .onChange(() => {
+                this.fxaaPass.enabled = !this.fxaaPass.enabled;
+            });
+
+        folder
+            .add(this.rgbShift.material.uniforms["amount"], "value", 0, 0.1)
+            .name("RGB Shift amount");
+        folder
+            .add(obj, "rgbShift")
+            .name("RGB Shift enabled")
+            .onChange(() => {
+                this.rgbShift.enabled = !this.rgbShift.enabled;
+            });
 
         this.stats = new Stats();
         this.stats.showPanel(0);
@@ -511,6 +535,7 @@ class Scene {
 
         this.composer = composer;
         this.fxaaPass = fxaaPass;
+        this.rgbShift = rgbShift;
     }
 
     async initialize() {
