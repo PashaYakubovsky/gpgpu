@@ -10,7 +10,7 @@ import GUI from "lil-gui";
 
 import t1 from "../assets/logo.png";
 import t2 from "../assets/super.png";
-import { DRACOLoader, GLTFLoader } from "three/examples/jsm/Addons.js";
+// import { DRACOLoader, GLTFLoader } from "three/examples/jsm/Addons.js";
 
 /**
  *
@@ -148,112 +148,112 @@ export default class FboSketch {
         this.scene.add(light2);
     }
 
-    setupMixer() {
-        const gltf = this.gltfObject;
-        this.mixer = new THREE.AnimationMixer(this.scene);
-        this.clips = gltf.animations;
-        console.log(this.clips);
+    // setupMixer() {
+    //     // const gltf = this.gltfObject;
+    //     this.mixer = new THREE.AnimationMixer(this.scene);
+    //     this.clips = gltf.animations;
+    //     console.log(this.clips);
 
-        for (let i = 0; i < this.clips.length; i++) {
-            const action = this.mixer.clipAction(this.clips[i]);
-            const clipName = action.getClip().name;
-            // if (["Root_2|Main|Layer0"].includes(clipName)) {
-            //     continue;
-            // }
-            if (clipName === "The_Drone_Control_FreeAction") {
-                action.loop = THREE.LoopRepeat;
-                action.clampWhenFinished = true;
-            } else {
-                action.loop = THREE.LoopPingPong;
-                action.timeScale = 2.5;
-            }
-            action.play();
-            // loop all animations
-            // action.loop = THREE.LoopRepeat;
-            // action.clampWhenFinished = true;
-            // action.play();
-        }
-    }
+    //     for (let i = 0; i < this.clips.length; i++) {
+    //         const action = this.mixer.clipAction(this.clips[i]);
+    //         const clipName = action.getClip().name;
+    //         // if (["Root_2|Main|Layer0"].includes(clipName)) {
+    //         //     continue;
+    //         // }
+    //         if (clipName === "The_Drone_Control_FreeAction") {
+    //             action.loop = THREE.LoopRepeat;
+    //             action.clampWhenFinished = true;
+    //         } else {
+    //             action.loop = THREE.LoopPingPong;
+    //             action.timeScale = 2.5;
+    //         }
+    //         action.play();
+    //         // loop all animations
+    //         // action.loop = THREE.LoopRepeat;
+    //         // action.clampWhenFinished = true;
+    //         // action.play();
+    //     }
+    // }
 
-    async setupGltfObject() {
-        this.gltfLoader = new GLTFLoader();
-        this.dracoLoader = new DRACOLoader();
+    // async setupGltfObject() {
+    //     this.gltfLoader = new GLTFLoader();
+    //     this.dracoLoader = new DRACOLoader();
 
-        this.dracoLoader.setDecoderConfig({ type: "js" });
-        this.dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+    //     this.dracoLoader.setDecoderConfig({ type: "js" });
+    //     this.dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
 
-        this.gltfLoader.setDRACOLoader(this.dracoLoader);
+    //     this.gltfLoader.setDRACOLoader(this.dracoLoader);
 
-        try {
-            const eyeDroneScene = await this.gltfLoader.loadAsync("../../public/eyeDrone.glb");
-            this.gltfObject = eyeDroneScene;
-            const eyeMat = new THREE.MeshNormalMaterial({
-                visible: false,
-            });
-            const invisibleMat = new THREE.MeshBasicMaterial({
-                visible: false,
-            });
-            eyeDroneScene.scene.traverse(child => {
-                if (
-                    child instanceof THREE.Mesh &&
-                    (!child.name.startsWith("__hair_dummy_ignore__") ||
-                        !child.name.startsWith("__hair_dummy_ignore__"))
-                ) {
-                    child.material = eyeMat;
-                    console.log(child.name);
-                } else if (child instanceof THREE.Mesh) {
-                    child.material = invisibleMat;
-                }
-            });
+    //     try {
+    //         const eyeDroneScene = await this.gltfLoader.loadAsync("../../public/eyeDrone.glb");
+    //         this.gltfObject = eyeDroneScene;
+    //         const eyeMat = new THREE.MeshNormalMaterial({
+    //             visible: false,
+    //         });
+    //         const invisibleMat = new THREE.MeshBasicMaterial({
+    //             visible: false,
+    //         });
+    //         eyeDroneScene.scene.traverse(child => {
+    //             if (
+    //                 child instanceof THREE.Mesh &&
+    //                 (!child.name.startsWith("__hair_dummy_ignore__") ||
+    //                     !child.name.startsWith("__hair_dummy_ignore__"))
+    //             ) {
+    //                 child.material = eyeMat;
+    //                 console.log(child.name);
+    //             } else if (child instanceof THREE.Mesh) {
+    //                 child.material = invisibleMat;
+    //             }
+    //         });
 
-            const eyeBall = eyeDroneScene.scene.getObjectByName("Sphere_3_2");
-            eyeBall.material = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.5,
-                side: THREE.DoubleSide,
-            });
+    //         const eyeBall = eyeDroneScene.scene.getObjectByName("Sphere_3_2");
+    //         eyeBall.material = new THREE.MeshBasicMaterial({
+    //             color: 0xffffff,
+    //             transparent: true,
+    //             opacity: 0.5,
+    //             side: THREE.DoubleSide,
+    //         });
 
-            const eyeCore = eyeDroneScene.scene.getObjectByName("Sphere_3");
-            eyeCore.material = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-            });
+    //         const eyeCore = eyeDroneScene.scene.getObjectByName("Sphere_3");
+    //         eyeCore.material = new THREE.MeshBasicMaterial({
+    //             color: 0x000000,
+    //         });
 
-            const eyeOuterRing = eyeDroneScene.scene.getObjectByName("Tube");
-            eyeOuterRing.material = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-            });
+    //         const eyeOuterRing = eyeDroneScene.scene.getObjectByName("Tube");
+    //         eyeOuterRing.material = new THREE.MeshBasicMaterial({
+    //             color: 0x000000,
+    //         });
 
-            const linesMat = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-            });
-            const line1 = eyeDroneScene.scene.getObjectByName("Sweep_1");
-            const line2 = eyeDroneScene.scene.getObjectByName("Sweep_1_2");
-            const line3 = eyeDroneScene.scene.getObjectByName("Sweep_1_3");
-            const line4 = eyeDroneScene.scene.getObjectByName("Sweep_1_4");
-            const line5 = eyeDroneScene.scene.getObjectByName("Sweep_1_5");
-            const line6 = eyeDroneScene.scene.getObjectByName("Sweep_1_6");
-            const line7 = eyeDroneScene.scene.getObjectByName("Sweep_1_7");
-            const line8 = eyeDroneScene.scene.getObjectByName("Sweep_1_8");
+    //         const linesMat = new THREE.MeshBasicMaterial({
+    //             color: 0xffffff,
+    //         });
+    //         const line1 = eyeDroneScene.scene.getObjectByName("Sweep_1");
+    //         const line2 = eyeDroneScene.scene.getObjectByName("Sweep_1_2");
+    //         const line3 = eyeDroneScene.scene.getObjectByName("Sweep_1_3");
+    //         const line4 = eyeDroneScene.scene.getObjectByName("Sweep_1_4");
+    //         const line5 = eyeDroneScene.scene.getObjectByName("Sweep_1_5");
+    //         const line6 = eyeDroneScene.scene.getObjectByName("Sweep_1_6");
+    //         const line7 = eyeDroneScene.scene.getObjectByName("Sweep_1_7");
+    //         const line8 = eyeDroneScene.scene.getObjectByName("Sweep_1_8");
 
-            if (line1) line1.material = linesMat;
-            if (line2) line2.material = linesMat;
-            if (line3) line3.material = linesMat;
-            if (line4) line4.material = linesMat;
-            if (line5) line5.material = linesMat;
-            if (line6) line6.material = linesMat;
-            if (line7) line7.material = linesMat;
-            if (line8) line8.material = linesMat;
-            const boneController = eyeDroneScene.scene.getObjectByName("The_Drone_Control_Free");
-            const cylinder = eyeDroneScene.scene.getObjectByName("Cylinder");
+    //         if (line1) line1.material = linesMat;
+    //         if (line2) line2.material = linesMat;
+    //         if (line3) line3.material = linesMat;
+    //         if (line4) line4.material = linesMat;
+    //         if (line5) line5.material = linesMat;
+    //         if (line6) line6.material = linesMat;
+    //         if (line7) line7.material = linesMat;
+    //         if (line8) line8.material = linesMat;
+    //         const boneController = eyeDroneScene.scene.getObjectByName("The_Drone_Control_Free");
+    //         const cylinder = eyeDroneScene.scene.getObjectByName("Cylinder");
 
-            this.scene.add(eyeDroneScene.scene);
-        } catch (e) {
-            console.error(e);
-        }
+    //         this.scene.add(eyeDroneScene.scene);
+    //     } catch (e) {
+    //         console.error(e);
+    //     }
 
-        this.setupMixer();
-    }
+    //     this.setupMixer();
+    // }
 
     setupSettings() {
         this.gui = new GUI();
@@ -667,11 +667,6 @@ export default class FboSketch {
         });
     }
 
-    moveEmitter() {
-        this.emitter.position.x = Math.sin(this.time) * 1.5;
-        // this.emitter.position.y = Math.cos(this.time) * 0.5;
-    }
-
     render() {
         if (this.paused) {
             window.requestAnimationFrame(this.render.bind(this));
@@ -754,9 +749,9 @@ export default class FboSketch {
 
         // END OF EMIITER
 
-        if (this.mixer) {
-            this.mixer.update(0.01);
-        }
+        // if (this.mixer) {
+        //     this.mixer.update(0.01);
+        // }
 
         // RENDER SCENE
         this.renderer.setRenderTarget(null);

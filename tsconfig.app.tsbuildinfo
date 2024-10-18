@@ -1,0 +1,1 @@
+{"root":["./src/vite-env.d.ts","./src/gpgpu-sketch/sketch.ts","./src/fbo-sketch/fbosketch.js","./src/main.tsx"],"version":"5.6.3"}
