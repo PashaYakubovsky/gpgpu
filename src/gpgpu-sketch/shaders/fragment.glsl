@@ -36,10 +36,10 @@ void main() {
     // }
 
     // final = mix(final , matcapColor,  velocity.y * 633.);
-    final.a = mix(0.0, 1.0, velocity.y * 130.5);
-    if(final.a > 0.05) {
-        final.a = 1.0;
-    }
+    final.a = mix(0.0, 1.0, velocity.y * 330.5);
+    // if(final.a > 0.05) {
+    //     final.a = 1.0;
+    // }
     gl_FragColor = final;
     // gl_FragColor = matcapColor;
     
