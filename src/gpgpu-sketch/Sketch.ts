@@ -499,12 +499,12 @@ class Scene {
 
         const rgbShift = new ShaderPass(RGBShiftShader);
         rgbShift.enabled = true;
-        rgbShift.material.uniforms["amount"].value = 0.01;
+        rgbShift.material.uniforms["amount"].value = 0.02;
 
         gsap.to(rgbShift.material.uniforms["amount"], {
             value: 0.0,
-            duration: 2,
-            ease: "power2.inOut",
+            duration: 4,
+            ease: "power4.inOut",
         });
 
         composer.addPass(rgbShift);
@@ -562,25 +562,7 @@ class Scene {
             transparent: true,
         });
 
-        this.geometryInstanced = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-
-        // create a random vertices to instances geometry
-
-        const uvInstanced = new Float32Array(this.count * 2);
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                const index = i * this.size + j;
-                uvInstanced[2 * index] = j / (this.size - 1);
-                uvInstanced[2 * index + 1] = i / (this.size - 1);
-            }
-        }
-        this.geometryInstanced.setAttribute(
-            "uvRef",
-            new THREE.InstancedBufferAttribute(uvInstanced, 2)
-        );
-
-        // this.scene.add(this.mesh);
-        this.makeInstanced(this.geometryInstanced, material);
+        this.makeInstanced(material);
     }
 
     private resize() {
@@ -652,8 +634,31 @@ class Scene {
         return total;
     }
 
-    makeInstanced(geometry: THREE.BufferGeometry, material: THREE.Material) {
-        this.mesh = new THREE.InstancedMesh(geometry, material, this.count);
+    makeInstanced(material: THREE.Material) {
+        // Create an InstancedBufferGeometry
+        this.geometryInstanced = new THREE.InstancedBufferGeometry();
+
+        // Set up the base geometry (e.g., a box)
+        const boxGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1, 1, 1, 1);
+        this.geometryInstanced.index = boxGeometry.index;
+        this.geometryInstanced.attributes.position = boxGeometry.attributes.position;
+        this.geometryInstanced.attributes.normal = boxGeometry.attributes.normal;
+
+        // create a random vertices to instances geometry
+        const uvInstanced = new Float32Array(this.count * 2);
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                const index = i * this.size + j;
+                uvInstanced[2 * index] = j / (this.size - 1);
+                uvInstanced[2 * index + 1] = i / (this.size - 1);
+            }
+        }
+        this.geometryInstanced.setAttribute(
+            "uvRef",
+            new THREE.InstancedBufferAttribute(uvInstanced, 2)
+        );
+
+        this.mesh = new THREE.InstancedMesh(this.geometryInstanced, material, this.count);
         this.scene.add(this.mesh);
     }
 
