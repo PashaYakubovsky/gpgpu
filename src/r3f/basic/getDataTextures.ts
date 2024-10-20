@@ -1,23 +1,37 @@
 import * as THREE from "three";
-
-export const getDataTexture = (size: number): THREE.DataTexture => {
+export const getDataTexture = (
+    size: number,
+    branches: number,
+    bounds: { min: number; max: number }
+): THREE.DataTexture => {
     const data = new Float32Array(size * size * 4);
-    for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-            const index = 4 * (i * size + j);
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const maxRadius = Math.min(centerX, centerY);
 
-            // generate points on a sphere
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(-1 + (2 * i) / size);
-            const x = Math.cos(theta) * Math.sin(phi);
-            const y = Math.sin(theta) * Math.sin(phi);
-            const z = Math.cos(phi);
+    for (let i = 0; i < size * size; i++) {
+        const index = i * 4;
 
-            data[index] = 5 * (i / size - 0.5);
-            data[index + 1] = 5 * (j / size - 0.5);
-            data[index + 2] = 0;
-            data[index + 3] = (Math.random() - 0.5) * 0.1;
-        }
+        // Generate points in a spiral pattern
+        const t = i / (size * size);
+        const angle = 2 * Math.PI * branches * t;
+        const radius = t * maxRadius;
+
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+
+        // Normalize to [-1, 1] range
+        const normalizedX = x / maxRadius;
+        const normalizedY = y / maxRadius;
+
+        // Map to the specified bounds
+        // position xy
+        data[index] = (normalizedX * (bounds.max - bounds.min)) / 2 + (bounds.max + bounds.min) / 2;
+        data[index + 1] =
+            (normalizedY * (bounds.max - bounds.min)) / 2 + (bounds.max + bounds.min) / 2;
+        // velocity zw
+        data[index + 2] = 0;
+        data[index + 3] = 0;
     }
 
     const dataTexture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType);

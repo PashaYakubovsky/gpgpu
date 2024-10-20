@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
+import { Environment, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import Particles from "./Particles";
 
 const Sketch = memo(() => {
@@ -20,12 +20,14 @@ const Sketch = memo(() => {
             <Particles />
             <Environment preset="night" />
 
-            {/* <EffectComposer> */}
-            {/* <FXAA blendFunction={1} /> */}
-            {/* <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} height={480} /> */}
-            {/* <Vignette eskil={false} offset={0.1} darkness={1.1} /> */}
-            {/* <Autofocus /> */}
-            {/* </EffectComposer> */}
+            <PerspectiveCamera
+                makeDefault
+                position={[0, 0, 10]}
+                fov={75}
+                aspect={window.innerWidth / window.innerHeight}
+                near={0.1}
+                far={100}
+            />
         </Canvas>
     );
 });

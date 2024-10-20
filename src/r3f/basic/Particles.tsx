@@ -34,8 +34,8 @@ for (let i = 0; i < size; i++) {
 }
 
 // get velocity data on sphere
-const velocities = getDataTexture(size);
-const positions = getDataTexture(size);
+const velocities = getDataTexture(size, 25, { min: -10, max: 10 });
+const positions = velocities.clone();
 
 const Particles = () => {
     const scene = useMemo(() => new THREE.Scene(), []);
@@ -55,6 +55,9 @@ const Particles = () => {
     const mousePosRef = useRef(new THREE.Vector2(0, 0));
     const simMaterial = useRef<THREE.ShaderMaterial>();
     const renMaterial = useRef<THREE.ShaderMaterial>();
+    const raycastMesh = useRef<THREE.Mesh>();
+    const pointsRef = useRef<THREE.Points>();
+    const simMeshRef = useRef<THREE.Mesh>();
 
     useThree(({ gl }) => {
         gl.setClearColor(new THREE.Color("black"));
@@ -80,10 +83,29 @@ const Particles = () => {
         }
     });
 
+    useFrame(({ clock }) => {
+        const el = clock.elapsedTime;
+
+        if (el > 5) {
+            if (simMaterial.current) {
+                // reset mode
+                simMaterial.current.uniforms.uInitHappen.value = -1;
+                simMaterial.current.needsUpdate = true;
+            }
+        }
+        if (el > 7) {
+            // default mode
+            if (simMaterial.current.uniforms.uInitHappen.value === -1) {
+                simMaterial.current.uniforms.uInitHappen.value = 1;
+                simMaterial.current.needsUpdate = true;
+            }
+        }
+    });
+
     return (
         <>
             {createPortal(
-                <mesh>
+                <mesh ref={simMeshRef}>
                     <planeGeometry args={[2, 2]} />
                     <simulationMaterial
                         uPosition={positions}
@@ -95,7 +117,7 @@ const Particles = () => {
                 scene
             )}
 
-            <points>
+            <points ref={pointsRef}>
                 <bufferGeometry>
                     <bufferAttribute
                         attach="attributes-position"
@@ -124,11 +146,13 @@ const Particles = () => {
 
             {/* raycast mesh */}
             <mesh
+                ref={raycastMesh}
                 onPointerMove={e => {
                     mousePosRef.current.x = e.point.x;
                     mousePosRef.current.y = e.point.y;
-                }}>
-                <planeGeometry args={[10, 10]} />
+                }}
+                onClick={() => {}}>
+                <planeGeometry args={[50, 50]} />
                 <meshBasicMaterial color="red" visible={false} />
             </mesh>
         </>

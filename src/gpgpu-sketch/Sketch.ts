@@ -97,7 +97,7 @@ class Scene {
         progress: 0.01,
     };
 
-    size = 512;
+    size = 256;
     count = this.size * this.size;
 
     constructor({ dom }: { dom: HTMLElement }) {

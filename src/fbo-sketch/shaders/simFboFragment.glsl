@@ -35,7 +35,7 @@ void main() {
         float rnd2 = rand(vUv + vec2(0.4,0.1)) - 0.5;
         float rnd3 = rand(vUv + vec2(0.5,0.3)) - 0.5;
 
-        gl_FragColor = vec4( uSource + vec3(rnd1, rnd2, rnd3) * uRandomness, 1.0);
+        gl_FragColor = vec4( uSource + vec3(rnd1, rnd2, rnd3), 1.0);
     }
 
     // POSITIONS

@@ -1,15 +1,39 @@
 import "./index.css";
 
-import React from "react";
 import { createRoot } from "react-dom/client";
 
-import App from "./App";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-// react-dom_client.js?v=b3395d54:21141 Uncaught Error: createRoot(...): Target container is not a DOM element.
+import Wrapper, { SketchList } from "./Wrapper";
 
 const rootEl = document.getElementById("root");
 
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: (
+            <nav className="nav">
+                <a href="/gpgpu-city">GPGPU City</a>
+                <a href="/r3fb">螺旋</a>
+                <a href="/particle-emitter">Flying Emitters</a>
+            </nav>
+        ),
+    },
+    {
+        path: "/" + SketchList.GPGPU,
+        element: <Wrapper type={SketchList.GPGPU} />,
+    },
+    {
+        path: "/" + SketchList.R3FB,
+        element: <Wrapper type={SketchList.R3FB} />,
+    },
+    {
+        path: "/" + SketchList["Particle emitter"],
+        element: <Wrapper type={SketchList["Particle emitter"]} />,
+    },
+]);
+
 if (rootEl) {
     const root = createRoot(rootEl);
-    root.render(<App />);
+    root.render(<RouterProvider router={router} />);
 }

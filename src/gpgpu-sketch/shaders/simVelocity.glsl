@@ -36,7 +36,7 @@ void main() {
     float maxDistance = 0.66;
     if( mouseDistance < maxDistance ) {
         vec3 direction = normalize( final - uMouse );
-        velocity += direction * 0.01 * (0.1 + uProgress) * 0.77;
+        velocity += direction * 0.01 * (0.1 + uProgress) * 1.77;
     }
 
     gl_FragColor = vec4(velocity, 1.0);

@@ -1,33 +1,27 @@
-import { useRef, useState } from "react";
+import React, { memo, useRef } from "react";
 import { useEffect } from "react";
 import FboSketch from "./fbo-sketch/FboSketch";
 import GPGPUSketch from "./gpgpu-sketch/Sketch";
 import Sketch from "./r3f/basic/Sketch";
 
-enum SketchList {
+export enum SketchList {
     "Particle emitter" = "Particle emitter",
     "GPGPU" = "GPGPU",
     "R3FB" = "R3FB",
 }
 
-function App() {
-    const [active, setActive] = useState<SketchList>(SketchList.GPGPU);
+const Wrapper = ({ type }: { type: string }) => {
     const currentSketch = useRef<
         (FboSketch & { name: string }) | (GPGPUSketch & { name: string }) | null
     >(null);
 
     useEffect(() => {
-        const query = window.location.search;
-        const urlParams = new URLSearchParams(query);
-        const active = urlParams.get("active") || SketchList.GPGPU;
-        setActive(active as SketchList);
-
-        if (active === SketchList["Particle emitter"]) {
+        if (type === SketchList["Particle emitter"]) {
             const sketch = new FboSketch({ dom: document.querySelector("#root")! });
             currentSketch.current = sketch;
             currentSketch.current.name = "Particle emitter";
         }
-        if (active === SketchList["GPGPU"]) {
+        if (type === SketchList["GPGPU"]) {
             const sketch = new GPGPUSketch({ dom: document.querySelector("#root")! });
             currentSketch.current = sketch;
             currentSketch.current.name = "GPGPU";
@@ -38,39 +32,18 @@ function App() {
             currentSketch.current?.destroy();
             currentSketch.current = null;
         };
-    }, []);
+    }, [type]);
 
     const handleClick = (name: SketchList) => {
-        currentSketch.current?.destroy();
-
-        if (name === "Particle emitter") {
-            const sketch = new FboSketch({ dom: document.querySelector("#root")! });
-            currentSketch.current = sketch;
-            currentSketch.current.name = "Particle emitter";
-        }
-        if (name === "GPGPU") {
-            const sketch = new GPGPUSketch({ dom: document.querySelector("#root")! });
-            currentSketch.current = sketch;
-            currentSketch.current.name = "GPGPU";
-        }
-        if (name === "R3FB") {
-            currentSketch.current = null;
-        }
-
-        setActive(name);
-
-        const query = window.location.search;
-        const urlParams = new URLSearchParams(query);
-        urlParams.set("active", name);
-        window.history.replaceState(null, "", "?" + urlParams.toString());
+        window.open(`${name}`, "_self");
     };
 
     return (
         <>
-            {active === SketchList.R3FB && <Sketch />}
+            {type === SketchList.R3FB && <Sketch />}
 
             <div className="controls">
-                {active === "GPGPU" && (
+                {type === "GPGPU" && (
                     <button
                         className="center"
                         onClick={() => {
@@ -83,25 +56,25 @@ function App() {
             </div>
             <nav className="navigation">
                 <button
-                    className={active === "Particle emitter" ? "active" : ""}
+                    className={type === "Particle emitter" ? "active" : ""}
                     onClick={() => handleClick(SketchList["Particle emitter"])}>
-                    {SketchList["Particle emitter"]}
+                    Flying emitters
                 </button>
 
                 <button
-                    className={active === "GPGPU" ? "active" : ""}
+                    className={type === "GPGPU" ? "active" : ""}
                     onClick={() => handleClick(SketchList["GPGPU"])}>
-                    {SketchList["GPGPU"]}
+                    GPGPU city
                 </button>
 
                 <button
-                    className={active === "R3FB" ? "active" : ""}
+                    className={type === "R3FB" ? "active" : ""}
                     onClick={() => handleClick(SketchList["R3FB"])}>
-                    {SketchList["R3FB"]}
+                    螺旋
                 </button>
             </nav>
         </>
     );
-}
+};
 
-export default App;
+export default memo(Wrapper);

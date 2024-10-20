@@ -18,6 +18,13 @@ const RenderMaterial = shaderMaterial(
 
     attribute vec2 ref;
 
+    vec3 rotate(vec3 v, float a) {
+        float s = sin(a);
+        float c = cos(a);
+        mat2 m = mat2(c, -s, s, c);
+        return vec3(m * v.xy, v.z);
+    }
+
     void main() {
         vec3 pos = position;
         vec4 position = texture2D(uPosition, ref);
@@ -25,9 +32,12 @@ const RenderMaterial = shaderMaterial(
 
         pos.xyz = position.xyz;
 
+        // rotate
+        // pos = rotate(pos, time * 0.1);
+
         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
         gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = (1.0 / -mvPosition.z) * 10.0;
+        gl_PointSize = 5.0;
 
         vUv = uv;
         vColor = gl_PointSize * 0.5 * vec3(.2, .1, .7);

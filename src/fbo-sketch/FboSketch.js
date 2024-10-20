@@ -13,8 +13,6 @@ import t2 from "../assets/super.png";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
-import { MapControls } from "three/examples/jsm/Addons.js";
 import gsap from "gsap";
 
 /**
@@ -93,7 +91,7 @@ export default class FboSketch {
         this.emittedVector = new THREE.Vector3(0, 0, 0);
 
         this.settings = {
-            progress: 1,
+            emitted: 15,
             gravity: new THREE.Vector3(0, 0, 3),
             radius: 0.01,
             speed: 0.05,
@@ -109,13 +107,8 @@ export default class FboSketch {
         this.pointer = new THREE.Vector2();
 
         this.renderer = new THREE.WebGLRenderer({
-            alpha: true,
             antialias: true,
-            powerPreference: "high-performance",
         });
-        this.renderer.toneMapping = THREE.ReinhardToneMapping;
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.setClearColor(0x000000, 1);
         this.renderer.setSize(this.width, this.height);
         this.container.appendChild(this.renderer.domElement);
@@ -140,7 +133,7 @@ export default class FboSketch {
         this.gltfLoader.setDRACOLoader(this.dracoLoader);
 
         this.camera = new THREE.PerspectiveCamera(70, this.width / this.height, 0.01, 500);
-        this.camera.position.z = -5;
+        this.camera.position.z = -1.5;
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         new RGBELoader().setPath("/").load("blue_lagoon_night_1k.hdr", texture => {
@@ -151,39 +144,34 @@ export default class FboSketch {
         this.emitters = [];
 
         this.addLoadingBar();
-
-        this.gltfLoader.load("/bird_0.glb", gltf => {
-            this.gltf = gltf;
-            gsap.to(this.loadingMat.uniforms.uProgress, {
-                value: 1,
-                duration: 5,
-                delay: 1,
-                onComplete: () => {
-                    this.paused = false;
-                    if (this.loadingMesh) this.scene.remove(this.loadingMesh);
-                    this.loadingMesh = null;
-                    this.addObjects();
-                },
-            });
+        gsap.to(this.loadingMat.uniforms.uProgress, {
+            value: 1,
+            duration: 5,
+            delay: 1,
+            onComplete: async () => {
+                this.paused = false;
+                if (this.loadingMesh) this.scene.remove(this.loadingMesh);
+                this.loadingMesh = null;
+                this.time = 0;
+            },
         });
 
-        this.controls = new MapControls(this.camera, this.renderer.domElement);
+        const init = async () => {
+            this.data1 = this.getPointsOnSphere();
 
-        this.time = 0;
-        Promise.all([this.getPixelDataFromImage(t1), this.getPixelDataFromImage(t2)]).then(
-            async textures => {
-                this.data1 = this.getPointsOnSphere();
-                this.data2 = this.getPointsOnSphere();
-                this.getPixelDataFromImage(t1);
-                this.mouseEvents();
-                this.setupFBO();
-                this.addLights();
-                this.setupResize();
-                this.setupSettings();
+            const gltf = await this.gltfLoader.loadAsync("/bird_0.glb");
+            this.gltf = gltf;
 
-                this.render();
-            }
-        );
+            await this.addObjects();
+            this.mouseEvents();
+            this.setupFBO();
+            this.addLights();
+            this.setupResize();
+            this.setupSettings();
+            this.render();
+        };
+
+        init();
     }
 
     addLoadingBar() {
@@ -275,12 +263,12 @@ export default class FboSketch {
 
             // Mixer setup
             this.mixer = new THREE.AnimationMixer(this.gltf.scene);
-            console.log(this.gltf.animations);
-            const flyClip = this.mixer.clipAction(this.gltf.animations[0]);
-            flyClip.loop = THREE.LoopRepeat;
-            flyClip.clampWhenFinished = true;
-            flyClip.play();
-            flyClip.timeScale = 1.5;
+            const flyClip = this.gltf.animations[0];
+            const flySubClip = THREE.AnimationUtils.subclip(flyClip, "fly", 0, 222, 24);
+            const action = this.mixer.clipAction(flySubClip);
+            action.loop = THREE.LoopRepeat;
+            action.clampWhenFinished = true;
+            action.play();
 
             this.scene.add(this.gltf.scene);
         } catch (e) {
@@ -292,7 +280,7 @@ export default class FboSketch {
         this.gui = new GUI();
 
         this.gui
-            .add(this.settings, "progress", 0, 1, 0.01)
+            .add(this.settings, "emitted", 0, 50)
 
             .onChange(val => {
                 this.simMaterial.uniforms.uProgress.value = val;
@@ -364,10 +352,10 @@ export default class FboSketch {
             });
 
         this.gui
-            .add(this.settings, "speed", 0, 1, 0.001)
+            .add(this.settings, "speed", 0, 3, 0.001)
             .name("Speed")
             .onChange(val => {
-                this.simMaterial.uniforms.uSpeed.value = val;
+                this.mixer.timeScale = val;
             });
 
         // random particles
@@ -475,7 +463,7 @@ export default class FboSketch {
         this.raycaster.setFromCamera(this.pointer, this.camera);
 
         // @ts-ignore
-        const intersects = this.raycaster.intersectObjects(this.floorMesh ? [this.floorMesh] : []);
+        const intersects = this.raycaster.intersectObject(this.raycastPlane);
         if (intersects.length > 0) {
             console.log(intersects[0].point);
             this.simMaterial.uniforms.uMouse.value = intersects[0].point;
@@ -520,8 +508,8 @@ export default class FboSketch {
             viewArea,
             viewArea,
             -viewArea,
-            -2,
-            2
+            -1000,
+            1000
         );
         this.cameraFBO.position.z = 1;
         this.cameraFBO.lookAt(new THREE.Vector3(0, 0, 0));
@@ -545,8 +533,6 @@ export default class FboSketch {
         this.geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
         this.geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
 
-        // this.geo.setDrawRange(3, 10);
-
         this.simMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
@@ -564,10 +550,11 @@ export default class FboSketch {
             },
             vertexShader: simVertex,
             fragmentShader: simFragment,
-            depthTest: false,
             depthWrite: false,
+            depthTest: false,
         });
         this.simMesh = new THREE.Points(this.geo, this.simMaterial);
+        this.simMesh.frustumCulled = false;
         this.sceneFBO.add(this.simMesh);
 
         this.renderTarget = new THREE.WebGLRenderTarget(this.size, this.size, {
@@ -609,6 +596,21 @@ export default class FboSketch {
     }
 
     async addObjects() {
+        // add raycast plane
+        this.raycastPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(100, 100, 1, 1),
+            new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                visible: false,
+                depthTest: false,
+                depthWrite: false,
+            })
+        );
+        // rotate front to camera
+        this.raycastPlane.lookAt(this.camera.position);
+        this.raycastPlane.position.z = 5;
+        this.scene.add(this.raycastPlane);
+
         await this.setupGltfObject();
 
         this.geometry = new THREE.BufferGeometry();
@@ -642,13 +644,14 @@ export default class FboSketch {
         });
 
         this.mesh = new THREE.Points(this.geometry, this.material);
+        this.mesh.frustumCulled = false;
         this.scene.add(this.mesh);
 
         this.debugPlane = new THREE.Mesh(
             new THREE.PlaneGeometry(1, 1, 1, 1),
             new THREE.MeshBasicMaterial({
                 map: new THREE.TextureLoader().load(t1),
-                visible: false,
+                visible: true,
             })
         );
         this.debugPlane.position.set(1.5, 0, 0);
@@ -696,10 +699,8 @@ export default class FboSketch {
         this.renderer.render(this.sceneFBO, this.cameraFBO);
 
         // BEGIN EMITTER
-
         if (!this.loadingMesh) {
-            // let emit = (this.number / this.emitters.length) * this.settings.progress;
-            let emit = 20;
+            let emit = this.settings.emitted;
             this.renderer.autoClear = false;
 
             this.emitters.forEach(emitter => {
@@ -741,11 +742,23 @@ export default class FboSketch {
 
         // END OF EMIITER
 
-        if (this.mixer) {
+        if (this.mixer && !this.loadingMesh) {
             this.mixer.update(0.01);
         }
-        if (this.controls) {
-            this.controls.update();
+        // if (this.controls) {
+        //     this.controls.update();
+        // }
+
+        // create cinematic camera movement based on mouse position
+        if (this.destinationPos) {
+            this.camera.position.lerp(
+                new THREE.Vector3(
+                    this.destinationPos.x * 0.33,
+                    this.destinationPos.y * 0.55,
+                    this.camera.position.z
+                ),
+                0.05
+            );
         }
 
         // RENDER SCENE

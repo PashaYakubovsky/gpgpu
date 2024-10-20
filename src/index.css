@@ -45,11 +45,13 @@ body {
 }
 .navigation button,
 .controls button {
-    padding: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    height: 2rem;
     background-color: transparent;
     border: 1px solid rgba(255, 255, 255, 0.87);
     color: rgba(255, 255, 255, 0.87);
     font-size: 1rem;
+    border-radius: 0.25rem;
     font-weight: 500;
     cursor: pointer;
     background-color: #242424;
@@ -64,4 +66,13 @@ body {
     padding: 0.5rem;
     right: 0;
     z-index: 1;
+}
+.nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column;
+    width: 100%;
+    max-width: 320px;
+    margin: auto;
+    padding: 0.5rem;
 }
