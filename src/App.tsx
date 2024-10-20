@@ -36,6 +36,7 @@ function App() {
         return () => {
             console.log("destroy");
             currentSketch.current?.destroy();
+            currentSketch.current = null;
         };
     }, []);
 
@@ -51,6 +52,9 @@ function App() {
             const sketch = new GPGPUSketch({ dom: document.querySelector("#root")! });
             currentSketch.current = sketch;
             currentSketch.current.name = "GPGPU";
+        }
+        if (name === "R3FB") {
+            currentSketch.current = null;
         }
 
         setActive(name);
