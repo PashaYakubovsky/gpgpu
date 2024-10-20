@@ -154,7 +154,7 @@ export default class FboSketch {
 
         this.addLoadingBar();
 
-        this.gltfLoader.load("../../public/bird_0.glb", gltf => {
+        this.gltfLoader.load("/bird_0.glb", gltf => {
             this.gltf = gltf;
             gsap.to(this.loadingMat.uniforms.uProgress, {
                 value: 1,
