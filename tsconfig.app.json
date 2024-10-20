@@ -23,5 +23,11 @@
         // "noUnusedParameters": true,
         // "noFallthroughCasesInSwitch": true
     },
-    "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.js", "src/main.tsx"]
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.d.ts",
+        "src/**/*.js",
+        "src/main.tsx",
+        "src/r3f/basic/Sketch.tsx"
+    ]
 }

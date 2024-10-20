@@ -21,10 +21,10 @@ void main() {
 
     // PARTICLES
     if(uRenderMode==0){
-        float life = 1.0 - clamp((uTime - direction.a)/20., 0., 1.);
+        float life = 1.0 - clamp((uTime - direction.a)/50., 0., 1.);
         float speedLife = clamp(life, 0.3, 1.0);
 
-        position.xyz = position.xyz + uSpeed * direction.xyz * 0.05 + uGravity * 0.01;
+        position.xyz = position.xyz + uSpeed * direction.xyz * 0.1 + uGravity * 0.01;
 
         gl_FragColor = vec4( position, speedLife);
     }

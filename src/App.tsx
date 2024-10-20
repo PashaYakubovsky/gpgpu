@@ -2,10 +2,12 @@ import { useRef, useState } from "react";
 import { useEffect } from "react";
 import FboSketch from "./fbo-sketch/FboSketch";
 import GPGPUSketch from "./gpgpu-sketch/Sketch";
+import Sketch from "./r3f/basic/Sketch";
 
 enum SketchList {
     "Particle emitter" = "Particle emitter",
     "GPGPU" = "GPGPU",
+    "R3FB" = "R3FB",
 }
 
 function App() {
@@ -32,6 +34,7 @@ function App() {
         }
 
         return () => {
+            console.log("destroy");
             currentSketch.current?.destroy();
         };
     }, []);
@@ -60,6 +63,8 @@ function App() {
 
     return (
         <>
+            {active === SketchList.R3FB && <Sketch />}
+
             <div className="controls">
                 {active === "GPGPU" && (
                     <button
@@ -83,6 +88,12 @@ function App() {
                     className={active === "GPGPU" ? "active" : ""}
                     onClick={() => handleClick(SketchList["GPGPU"])}>
                     {SketchList["GPGPU"]}
+                </button>
+
+                <button
+                    className={active === "R3FB" ? "active" : ""}
+                    onClick={() => handleClick(SketchList["R3FB"])}>
+                    {SketchList["R3FB"]}
                 </button>
             </nav>
         </>

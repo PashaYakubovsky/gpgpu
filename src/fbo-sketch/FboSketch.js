@@ -94,10 +94,10 @@ export default class FboSketch {
 
         this.settings = {
             progress: 1,
-            gravity: new THREE.Vector3(0, 0, 5),
-            radius: 0.19,
-            speed: 0.1,
-            randomness: 0.5,
+            gravity: new THREE.Vector3(0, 0, 3),
+            radius: 0.01,
+            speed: 0.05,
+            randomness: 0.7,
         };
 
         this.debugOptions = {};
@@ -139,10 +139,8 @@ export default class FboSketch {
 
         this.gltfLoader.setDRACOLoader(this.dracoLoader);
 
-        this.camera = new THREE.PerspectiveCamera(70, this.width / this.height, 0.01, 1000);
-        this.camera.position.z = -10;
-        // this.camera.position.y = 10;
-        // this.camera.position.x = 8;
+        this.camera = new THREE.PerspectiveCamera(70, this.width / this.height, 0.01, 500);
+        this.camera.position.z = -5;
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         new RGBELoader().setPath("/").load("blue_lagoon_night_1k.hdr", texture => {
@@ -241,16 +239,6 @@ export default class FboSketch {
         rectLight3.position.set(-10, 7, 0);
         rectLight3.lookAt(0, 0, 0);
         this.scene.add(rectLight3);
-
-        // add helpers
-        // const helper = new RectAreaLightHelper(rectLight);
-        // this.scene.add(helper);
-
-        // const helper2 = new RectAreaLightHelper(rectLight2);
-        // this.scene.add(helper2);
-
-        // const helper3 = new RectAreaLightHelper(rectLight3);
-        // this.scene.add(helper3);
     }
 
     async setupGltfObject() {
@@ -282,28 +270,7 @@ export default class FboSketch {
                     m.material = diamondMaterial;
                     m.castShadow = true;
                 }
-            });
-
-            // add points to the bird
-            const rootNode = this.gltf.scene.getObjectByName("RootNode").clone();
-            const pointsMat = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.01,
-                blending: THREE.AdditiveBlending,
-            });
-
-            const meshes = [];
-            rootNode.children.map(c => {
-                if (c.name == "Left_Wing" || c.name == "Right_Wing") {
-                    c.children.forEach(cc => {
-                        if (cc.children[0] instanceof THREE.Mesh) {
-                            cc.children[0].material = pointsMat;
-                            meshes.push(cc.children[0]);
-                        }
-                    });
-                } else {
-                    c.visible = false;
-                }
+                m.frustumCulled = false;
             });
 
             // Mixer setup
@@ -597,6 +564,8 @@ export default class FboSketch {
             },
             vertexShader: simVertex,
             fragmentShader: simFragment,
+            depthTest: false,
+            depthWrite: false,
         });
         this.simMesh = new THREE.Points(this.geo, this.simMaterial);
         this.sceneFBO.add(this.simMesh);
@@ -659,12 +628,9 @@ export default class FboSketch {
         this.geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
         this.geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
 
-        this.material = new THREE.MeshNormalMaterial();
-
         this.material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
-                // uTexture: { value: new THREE.TextureLoader().load(texture) },
                 uTexture: { value: this.positions },
             },
             vertexShader: vertexShader,
@@ -672,6 +638,7 @@ export default class FboSketch {
             depthWrite: false,
             depthTest: false,
             transparent: true,
+            blending: THREE.AdditiveBlending,
         });
 
         this.mesh = new THREE.Points(this.geometry, this.material);
@@ -711,7 +678,7 @@ export default class FboSketch {
 
             // POSITIONS
             this.simMaterial.uniforms.uRenderMode.value = 2;
-            this.simMaterial.uniforms.uSource.value = new THREE.Vector3(0, 100, 0);
+            this.simMaterial.uniforms.uSource.value = new THREE.Vector3(0, 1000, 0);
             this.renderer.setRenderTarget(this.initPos);
             this.renderer.render(this.sceneFBO, this.cameraFBO);
             this.simMaterial.uniforms.uCurrentPosition.value = this.initPos.texture;
@@ -731,7 +698,8 @@ export default class FboSketch {
         // BEGIN EMITTER
 
         if (!this.loadingMesh) {
-            let emit = this.settings.progress * this.size * 0.03;
+            // let emit = (this.number / this.emitters.length) * this.settings.progress;
+            let emit = 20;
             this.renderer.autoClear = false;
 
             this.emitters.forEach(emitter => {
@@ -799,10 +767,6 @@ export default class FboSketch {
     }
 
     destroy() {
-        this.container.removeChild(this.renderer.domElement);
-        window.removeEventListener("resize", this.resize.bind(this));
-        window.removeEventListener("mousemove", this.handleMouseMove.bind(this));
-
         // clean all fbo textures
         this.positions.dispose();
         this.directions.dispose();
@@ -812,5 +776,9 @@ export default class FboSketch {
 
         this.renderer.dispose();
         this.gui.destroy();
+
+        this.container.removeChild(this.renderer.domElement);
+        window.removeEventListener("resize", this.resize.bind(this));
+        window.removeEventListener("mousemove", this.handleMouseMove.bind(this));
     }
 }
