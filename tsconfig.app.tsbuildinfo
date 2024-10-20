@@ -1,1 +1,1 @@
-{"root":["./src/vite-env.d.ts","./src/gpgpu-sketch/sketch.ts","./src/fbo-sketch/fbosketch.js","./src/main.tsx"],"version":"5.6.3"}
+{"root":["./src/vite-env.d.ts","./src/gpgpu-sketch/sketch.ts","./src/r3f/basic/rendermaterial.ts","./src/r3f/basic/simulationmaterial.ts","./src/r3f/basic/getdatatextures.ts","./src/fbo-sketch/fbosketch.js","./src/main.tsx","./src/r3f/basic/sketch.tsx"],"errors":true,"version":"5.6.3"}
