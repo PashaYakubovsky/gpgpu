@@ -44,7 +44,7 @@ void main() {
         float rnd2 = rand(vUv + vec2(0.1,0.1)) - 0.5;
         float rnd3 = rand(vUv + vec2(0.3,0.3)) - 0.5;
 
-        vec4 final = vec4( uSource + vec3(rnd1,rnd2,rnd3)*uRadius, 1.);
+        vec4 final = vec4( uSource + vec3(rnd1,rnd2,rnd3)*uRadius * 2.4, 1.);
 
         gl_FragColor = final;
     }

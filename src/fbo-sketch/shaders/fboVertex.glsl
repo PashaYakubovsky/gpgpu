@@ -5,6 +5,8 @@ uniform sampler2D uTexture;
 
 varying float vLife;
 varying vec2 vUv;
+varying vec3 vColor;
+varying vec3 vWorldPosition;
 
 void main() {
     vec3 newpos = position;
@@ -17,6 +19,8 @@ void main() {
     gl_PointSize =  5.*( 2.0 / -mvPosition.z );
     gl_Position = projectionMatrix * mvPosition;
 
+    vColor = simPosition.xyz;
+    vWorldPosition = position;
     vUv = uv;
     vLife = simPosition.w;
 }

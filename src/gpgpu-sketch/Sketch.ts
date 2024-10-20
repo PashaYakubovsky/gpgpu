@@ -32,7 +32,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
-import { RGBShiftShader } from "three/examples/jsm/Addons.js";
+import { RGBShiftShader } from "three/addons/shaders/RGBShiftShader.js";
 
 import gui from "lil-gui";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
