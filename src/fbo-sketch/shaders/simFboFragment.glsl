@@ -21,10 +21,10 @@ void main() {
 
     // PARTICLES
     if(uRenderMode==0){
-        float life = 1.0 - clamp((uTime - direction.a)/50., 0., 1.);
+        float life = 1.0 - clamp((uTime - direction.a)/150., 0., 1.);
         float speedLife = clamp(life, 0.3, 1.0);
 
-        position.xyz = position.xyz + uSpeed * direction.xyz * 0.1 + uGravity * 0.01;
+        position.xyz = position.xyz + 0.05 * direction.xyz * 0.25 + uGravity * 0.05;
 
         gl_FragColor = vec4( position, speedLife);
     }
@@ -35,7 +35,7 @@ void main() {
         float rnd2 = rand(vUv + vec2(0.4,0.1)) - 0.5;
         float rnd3 = rand(vUv + vec2(0.5,0.3)) - 0.5;
 
-        gl_FragColor = vec4( uSource + vec3(rnd1, rnd2, rnd3), 1.0);
+        gl_FragColor = vec4( uSource + vec3(rnd1, rnd2, rnd3) * uRandomness, 1.0);
     }
 
     // POSITIONS

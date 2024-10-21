@@ -3,11 +3,13 @@ import { useEffect } from "react";
 import FboSketch from "./fbo-sketch/FboSketch";
 import GPGPUSketch from "./gpgpu-sketch/Sketch";
 import Sketch from "./r3f/basic/Sketch";
+import Sketch2 from "./r3f/gpgpu/Sketch";
 
 export enum SketchList {
     "Particle emitter" = "Particle emitter",
     "GPGPU" = "GPGPU",
     "R3FB" = "R3FB",
+    R3FGPGPU = "R3FGPGPU",
 }
 
 const Wrapper = ({ type }: { type: string }) => {
@@ -41,6 +43,7 @@ const Wrapper = ({ type }: { type: string }) => {
     return (
         <>
             {type === SketchList.R3FB && <Sketch />}
+            {type === SketchList.R3FGPGPU && <Sketch2 />}
 
             <div className="controls">
                 {type === "GPGPU" && (
@@ -56,21 +59,27 @@ const Wrapper = ({ type }: { type: string }) => {
             </div>
             <nav className="navigation">
                 <button
-                    className={type === "Particle emitter" ? "active" : ""}
+                    className={type === SketchList["Particle emitter"] ? "active" : ""}
                     onClick={() => handleClick(SketchList["Particle emitter"])}>
                     Flying emitters
                 </button>
 
                 <button
-                    className={type === "GPGPU" ? "active" : ""}
+                    className={type === SketchList["GPGPU"] ? "active" : ""}
                     onClick={() => handleClick(SketchList["GPGPU"])}>
                     GPGPU city
                 </button>
 
                 <button
-                    className={type === "R3FB" ? "active" : ""}
+                    className={type === SketchList["R3FB"] ? "active" : ""}
                     onClick={() => handleClick(SketchList["R3FB"])}>
                     螺旋
+                </button>
+
+                <button
+                    className={type === SketchList["R3FGPGPU"] ? "active" : ""}
+                    onClick={() => handleClick(SketchList["R3FGPGPU"])}>
+                    GPGPU Maze
                 </button>
             </nav>
         </>

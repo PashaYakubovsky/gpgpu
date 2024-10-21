@@ -13,6 +13,7 @@ import t2 from "../assets/super.png";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import Stats from "three/examples/jsm/libs/stats.module.js";
 import gsap from "gsap";
 
 /**
@@ -91,9 +92,9 @@ export default class FboSketch {
         this.emittedVector = new THREE.Vector3(0, 0, 0);
 
         this.settings = {
-            emitted: 15,
-            gravity: new THREE.Vector3(0, 0, 3),
-            radius: 0.01,
+            emitted: 25,
+            gravity: new THREE.Vector3(0, 0, -2),
+            radius: 0.31,
             speed: 0.05,
             randomness: 0.7,
         };
@@ -133,7 +134,7 @@ export default class FboSketch {
         this.gltfLoader.setDRACOLoader(this.dracoLoader);
 
         this.camera = new THREE.PerspectiveCamera(70, this.width / this.height, 0.01, 500);
-        this.camera.position.z = -1.5;
+        this.camera.position.z = -0.5;
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         new RGBELoader().setPath("/").load("blue_lagoon_night_1k.hdr", texture => {
@@ -365,6 +366,9 @@ export default class FboSketch {
             .onChange(val => {
                 this.simMaterial.uniforms.uRandomness.value = val;
             });
+
+        this.stats = new Stats();
+        this.container.appendChild(this.stats.dom);
     }
 
     getPointsOnSphere() {
@@ -463,11 +467,18 @@ export default class FboSketch {
         this.raycaster.setFromCamera(this.pointer, this.camera);
 
         // @ts-ignore
-        const intersects = this.raycaster.intersectObject(this.raycastPlane);
+        const intersects = this.raycaster.intersectObject(this.raycastPlane, false);
         if (intersects.length > 0) {
-            console.log(intersects[0].point);
-            this.simMaterial.uniforms.uMouse.value = intersects[0].point;
-            this.destinationPos = intersects[0].point;
+            const point = intersects[0].point;
+            this.simMaterial.uniforms.uMouse.value = point;
+
+            // if close to center with 0.25 radius dont set new destination
+            if (point.length() - 5 > 0.25) {
+                this.destinationPos = point;
+                this.destinationPos.x *= 0.33;
+                this.destinationPos.y *= 0.55;
+                this.destinationPos.z = this.camera.position.z;
+            }
         }
     }
     mouseEvents() {
@@ -659,6 +670,68 @@ export default class FboSketch {
 
         this.emitterDirection = new THREE.Vector3(0, 0, 0);
         this.emitterPrevDirection = new THREE.Vector3(0, 0, 0);
+
+        const pGeo = new THREE.BufferGeometry();
+
+        const pPos = new Float32Array(this.number * 3);
+        const pRef = new Float32Array(this.number * 2);
+        const pSize = 32;
+        for (let i = 0; i < pSize; i++) {
+            for (let j = 0; j < pSize; j++) {
+                const index = i * pSize + j;
+
+                const r = 10;
+                const x = Math.random() * r - r / 2;
+                const y = Math.random() * r - r / 2;
+                const z = Math.random() * r - r / 2;
+
+                pPos[3 * index] = x;
+                pPos[3 * index + 1] = y;
+                pPos[3 * index + 2] = z;
+            }
+        }
+
+        pGeo.setAttribute(
+            "position",
+            new THREE.BufferAttribute(pPos, 3).setUsage(THREE.DynamicDrawUsage)
+        );
+
+        pGeo.setAttribute("uv", new THREE.BufferAttribute(pRef, 2));
+
+        const pMat = new THREE.ShaderMaterial({
+            blending: THREE.AdditiveBlending,
+            uniforms: {
+                uTime: { value: 0 },
+                uDirection: { value: new THREE.Vector3(0, 1, 0) },
+            },
+            fragmentShader: `
+            varying vec2 vUv;
+            void main() {
+                gl_FragColor = vec4(vec3(1.0), 1.);
+            }
+            `,
+            vertexShader: `
+            varying vec2 vUv;
+            uniform float uTime;
+            uniform vec3 uDirection;
+
+            void main() {
+                vUv = uv;
+                vec4 pos = modelMatrix * vec4(position, 1.0);
+
+                // move particles to direction
+                pos.xyz += uDirection * sin(uTime * 0.1) * 10.1;
+
+                gl_Position = projectionMatrix * viewMatrix * pos;
+                gl_PointSize = (5.0 / - gl_Position.z);
+            }
+            `,
+        });
+
+        // add particles
+        this.particles = new THREE.Points(pGeo, pMat);
+        this.particles.position.z = 0;
+        this.scene.add(this.particles);
     }
 
     render() {
@@ -745,20 +818,20 @@ export default class FboSketch {
         if (this.mixer && !this.loadingMesh) {
             this.mixer.update(0.01);
         }
+
+        if (this.stats) this.stats.update();
         // if (this.controls) {
         //     this.controls.update();
         // }
 
         // create cinematic camera movement based on mouse position
         if (this.destinationPos) {
-            this.camera.position.lerp(
-                new THREE.Vector3(
-                    this.destinationPos.x * 0.33,
-                    this.destinationPos.y * 0.55,
-                    this.camera.position.z
-                ),
-                0.05
-            );
+            this.camera.position.lerp(this.destinationPos, 0.05);
+        }
+
+        if (this.particles) {
+            this.particles.material.uniforms.uTime.value = this.time;
+            this.particles.material.uniforms.uDirection.value = this.emittedVector;
         }
 
         // RENDER SCENE
@@ -775,7 +848,7 @@ export default class FboSketch {
         }
         this.simMaterial.uniforms.uCurrentPosition.value = this.renderTarget1.texture;
         this.simMaterial.uniforms.uTime.value = this.time;
-        if (this.debugPlane) this.debugPlane.material.map = this.renderTarget.texture;
+
         window.requestAnimationFrame(this.render.bind(this));
     }
 
@@ -789,6 +862,8 @@ export default class FboSketch {
 
         this.renderer.dispose();
         this.gui.destroy();
+
+        if (this.stats) this.stats.dom.remove();
 
         this.container.removeChild(this.renderer.domElement);
         window.removeEventListener("resize", this.resize.bind(this));
