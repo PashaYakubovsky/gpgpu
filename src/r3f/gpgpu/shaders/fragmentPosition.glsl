@@ -17,7 +17,7 @@ void main() {
     vec4 position = texture2D(uPositionTexture, uv);
     vec4 velocity = texture2D(uVelocityTexture, uv);
 
-    vec4 projectedPosition = position + velocity * .01;
+    vec4 projectedPosition = position + velocity * .1;
 
     // rotation
     float angle = time * 0.1;

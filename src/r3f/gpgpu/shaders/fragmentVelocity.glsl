@@ -14,7 +14,7 @@ void main() {
     vec3 original = texture2D(uOriginalPositionTexture, uv).xyz;
     float offset = rand(uv);
 
-    velocity *= 0.99;
+    velocity *= 0.9;
 
     vec3 n = gln_curl(position) * 0.1;
 
@@ -31,7 +31,7 @@ void main() {
     float maxDistance = 5.6;
     if( mouseDistance < maxDistance ) {
         vec3 direction = normalize( position - uMouse );
-        velocity.xyz += direction * (1.0 - (mouseDistance / maxDistance)) * 3.7;
+        velocity.xyz += direction * (1.0 - (mouseDistance / maxDistance)) * .7;
     }
 
     // rotation

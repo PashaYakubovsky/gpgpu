@@ -167,7 +167,6 @@ const Particles = () => {
     return (
         <>
             <instancedMesh ref={iRef} args={[null, null, count]} frustumCulled={false}>
-                {/* romb */}
                 <boxGeometry args={[0.1, 0.1, 0.1]} />
                 <CustomShaderMaterial
                     baseMaterial={THREE.MeshPhysicalMaterial}
