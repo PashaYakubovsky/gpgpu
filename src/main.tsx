@@ -35,6 +35,10 @@ const router = createBrowserRouter([
         path: "/" + SketchList["R3FGPGPU"],
         element: <Wrapper type={SketchList["R3FGPGPU"]} />,
     },
+    {
+        path: "/" + SketchList["WebGLSlider"],
+        element: <Wrapper type={SketchList["WebGLSlider"]} />,
+    },
 ]);
 
 if (rootEl) {

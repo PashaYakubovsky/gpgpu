@@ -9,5 +9,30 @@
     <body>
         <div id="root"></div>
         <script type="module" src="/src/main.tsx"></script>
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="gooeyCursor_svg" version="1.1">
+            <filter class="gooeyCursor_filter" id="gooey">
+                <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="7"></feGaussianBlur>
+                <feColorMatrix
+                    in="blur"
+                    mode="matrix"
+                    result="gooey"
+                    values="
+				1 0 0 0 0
+				0 1 0 0 0
+				0 0 1 0 0
+				0 0 0 20 -7"></feColorMatrix>
+                <feMorphology
+                    in="gooey"
+                    operator="dilate"
+                    radius="2"
+                    result="outline"></feMorphology>
+                <feComposite
+                    in="outline"
+                    in2="gooey"
+                    operator="out"
+                    result="composite"></feComposite>
+            </filter>
+        </svg>
     </body>
 </html>

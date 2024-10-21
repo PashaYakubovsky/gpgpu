@@ -4,12 +4,14 @@ import FboSketch from "./fbo-sketch/FboSketch";
 import GPGPUSketch from "./gpgpu-sketch/Sketch";
 import Sketch from "./r3f/basic/Sketch";
 import Sketch2 from "./r3f/gpgpu/Sketch";
+import WebGlSliderSketch from "./webgl-slider/Sketch";
 
 export enum SketchList {
     "Particle emitter" = "Particle emitter",
     "GPGPU" = "GPGPU",
     "R3FB" = "R3FB",
     R3FGPGPU = "R3FGPGPU",
+    WebGLSlider = "WebGLSlider",
 }
 
 const Wrapper = ({ type }: { type: string }) => {
@@ -27,6 +29,11 @@ const Wrapper = ({ type }: { type: string }) => {
             const sketch = new GPGPUSketch({ dom: document.querySelector("#root")! });
             currentSketch.current = sketch;
             currentSketch.current.name = "GPGPU";
+        }
+        if (type === SketchList.WebGLSlider) {
+            const sketch = new WebGlSliderSketch({ dom: document.querySelector("#root")! });
+            currentSketch.current = sketch;
+            currentSketch.current.name = "WebGLSlider";
         }
 
         return () => {
@@ -80,6 +87,12 @@ const Wrapper = ({ type }: { type: string }) => {
                     className={type === SketchList["R3FGPGPU"] ? "active" : ""}
                     onClick={() => handleClick(SketchList["R3FGPGPU"])}>
                     GPGPU Maze
+                </button>
+
+                <button
+                    className={type === SketchList.WebGLSlider ? "active" : ""}
+                    onClick={() => handleClick(SketchList.WebGLSlider)}>
+                    WebGL Slider
                 </button>
             </nav>
         </>
