@@ -12,10 +12,10 @@ const router = createBrowserRouter([
         path: "/",
         element: (
             <nav className="nav">
-                <a href="/gpgpu-city">GPGPU City</a>
-                <a href="/r3fb">螺旋</a>
-                <a href="/particle-emitter">Flying Emitters</a>
-                <a href="/particle-emitter">GPGPU Maze</a>
+                <a href={"/" + SketchList["GPGPU"]}>GPGPU City</a>
+                <a href={"/" + SketchList["R3FB"]}>螺旋</a>
+                <a href={"/" + SketchList["Particle emitter"]}>Flying Emitters</a>
+                <a href={"/" + SketchList["R3FGPGPU"]}>GPGPU Maze</a>
             </nav>
         ),
     },
