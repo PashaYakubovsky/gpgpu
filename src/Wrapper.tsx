@@ -5,6 +5,7 @@ import GPGPUSketch from "./gpgpu-sketch/Sketch";
 import Sketch from "./r3f/basic/Sketch";
 import Sketch2 from "./r3f/gpgpu/Sketch";
 import WebGlSliderSketch from "./webgl-slider/Sketch";
+import BounceSketch from "./r3f/bounce/Sketch";
 
 export enum SketchList {
     "Particle emitter" = "Particle emitter",
@@ -12,6 +13,7 @@ export enum SketchList {
     "R3FB" = "R3FB",
     R3FGPGPU = "R3FGPGPU",
     WebGLSlider = "WebGLSlider",
+    Bounce = "Bounce",
 }
 
 const Wrapper = ({ type }: { type: string }) => {
@@ -49,8 +51,12 @@ const Wrapper = ({ type }: { type: string }) => {
 
     return (
         <>
+            <a href="/" className="back">
+                back
+            </a>
             {type === SketchList.R3FB && <Sketch />}
             {type === SketchList.R3FGPGPU && <Sketch2 />}
+            {type === SketchList.Bounce && <BounceSketch />}
 
             <div className="controls">
                 {type === "GPGPU" && (
@@ -64,7 +70,7 @@ const Wrapper = ({ type }: { type: string }) => {
                     </button>
                 )}
             </div>
-            <nav className="navigation">
+            {/* <nav className="navigation">
                 <button
                     className={type === SketchList["Particle emitter"] ? "active" : ""}
                     onClick={() => handleClick(SketchList["Particle emitter"])}>
@@ -94,7 +100,13 @@ const Wrapper = ({ type }: { type: string }) => {
                     onClick={() => handleClick(SketchList.WebGLSlider)}>
                     WebGL Slider
                 </button>
-            </nav>
+
+                <button
+                    className={type === SketchList.Bounce ? "active" : ""}
+                    onClick={() => handleClick(SketchList.Bounce)}>
+                    Bounce
+                </button>
+            </nav> */}
         </>
     );
 };

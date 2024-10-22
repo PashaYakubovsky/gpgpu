@@ -16,26 +16,26 @@ void main() {
 
     velocity *= 0.9;
 
-    vec3 n = gln_curl(position) * .01;
+    vec3 n = gln_curl(position) * 0.1;
 
     // particle attraction to shape force
     vec3 direction = normalize( original - position );
     float dist = length( original - position );
     if( dist > 0.1) {
-        velocity.xyz += direction * .2;
+        velocity.xyz += direction * 0.1;
     }
+
 
     // mouse repel force
     float mouseDistance = distance( position, uMouse );
-    float maxDistance = 20.0;
+    float maxDistance = 5.6;
     if( mouseDistance < maxDistance ) {
-        // vec3 direction = normalize( position - uMouse );
-        // velocity.xyz += direction * (1.0 - (mouseDistance / maxDistance)) * .7;
-        velocity.xyz = original - position;
-    } else {
-        velocity.xyz += n*100.4;
+        vec3 direction = normalize( position - uMouse );
+        velocity.xyz += direction * (1.0 - (mouseDistance / maxDistance)) * .7;
     }
 
+    // rotation
+    velocity.xyz += n*0.4;
 
     gl_FragColor = velocity;
 }

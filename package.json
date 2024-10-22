@@ -12,6 +12,7 @@
     "dependencies": {
         "@pmndrs/vanilla": "^1.19.3",
         "@react-spring/three": "^9.7.5",
+        "@react-three/cannon": "^6.6.0",
         "@react-three/drei": "^9.114.6",
         "@react-three/fiber": "^8.17.10",
         "@react-three/postprocessing": "^2.16.3",

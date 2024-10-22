@@ -6,9 +6,7 @@ uniform float progress;
 
 varying vec2 vUv;
 varying vec3 vPosition;
-varying vec3 vWorldPosition;
 
-#define PI 3.14159265359
 
 mat4 rotation3d(vec3 axis, float angle) {
   axis = normalize(axis);
@@ -40,12 +38,9 @@ void main() {
     pos = rotateX(pos, 1.0 * cos(smoothstep(-4.0, 4.0,sin(pos.y)) * 3.4) * 1.1);
     pos.xz = rotateY(pos, 1.0 * cos(smoothstep(-4.0, 4.0,sin(pos.y)) * 3.4) * 1.1).xz;
 
-    vec3 worldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
-
 
     vPosition = pos;
-    vWorldPosition = worldPosition;
     vUv = uv;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(worldPosition, 1.0);
+    csm_Position = pos;
 }

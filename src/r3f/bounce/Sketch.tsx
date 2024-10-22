@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls, PerspectiveCamera, Stats } from "@react-three/drei";
-import Particles from "./Particles";
+import { Environment, OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import Bounce from "./Bounce";
 
 const Sketch = memo(() => {
     return (
@@ -16,25 +16,22 @@ const Sketch = memo(() => {
                 top: 0,
                 left: 0,
             }}>
-            <OrbitControls />
-            <Particles />
-            <ambientLight intensity={3.1} color="white" />
+            <OrbitControls enableDamping />
+            {/* <Particles /> */}
+            <Bounce />
 
-            <directionalLight intensity={0.5} position={[0, 0, 5]} color="white" />
-            <directionalLight intensity={0.5} position={[0, 0, -5]} color="red" />
-            <directionalLight intensity={0.5} position={[0, 5, 0]} color="blue" />
-
-            <Environment preset="dawn" />
-
-            <Stats />
+            <color attach="background" args={["#171720"]} />
+            <ambientLight intensity={0.1} />
+            <pointLight args={[0xff0000, 10, 100]} position={[-1, 3, 1]} castShadow />
+            <spotLight castShadow args={["blue", 10, 100]} penumbra={1} />
 
             <PerspectiveCamera
                 makeDefault
-                position={[-3, 50, 0]}
+                position={[0, 5, 5]}
                 fov={75}
                 aspect={window.innerWidth / window.innerHeight}
                 near={0.1}
-                far={1000}
+                far={500}
             />
         </Canvas>
     );

@@ -19,6 +19,12 @@ body {
     overflow: hidden;
     overscroll-behavior: none;
 }
+.back {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 1;
+}
 #root {
     display: flex;
     flex-direction: column;

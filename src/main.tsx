@@ -16,6 +16,8 @@ const router = createBrowserRouter([
                 <a href={"/" + SketchList["R3FB"]}>螺旋</a>
                 <a href={"/" + SketchList["Particle emitter"]}>Flying Emitters</a>
                 <a href={"/" + SketchList["R3FGPGPU"]}>GPGPU Maze</a>
+                <a href={"/" + SketchList["WebGLSlider"]}>WebGl slider</a>
+                <a href={"/" + SketchList["Bounce"]}>Physics</a>
             </nav>
         ),
     },
@@ -38,6 +40,10 @@ const router = createBrowserRouter([
     {
         path: "/" + SketchList["WebGLSlider"],
         element: <Wrapper type={SketchList["WebGLSlider"]} />,
+    },
+    {
+        path: "/" + SketchList["Bounce"],
+        element: <Wrapper type={SketchList["Bounce"]} />,
     },
 ]);
 
