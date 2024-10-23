@@ -5,7 +5,8 @@
 
     color-scheme: light dark;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+    /* background-color: #242424; */
+    background-color: #111111;
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -18,6 +19,8 @@ body {
     min-height: 100vh;
     overflow: hidden;
     overscroll-behavior: none;
+    font-weight: 400;
+    font-style: normal;
 }
 .back {
     position: absolute;
@@ -84,11 +87,43 @@ body {
     display: flex;
     gap: 0.5rem;
     flex-direction: column;
-    width: 100%;
-    max-width: 320px;
+    align-items: center;
+    justify-content: center;
     margin: auto;
     padding: 1.5rem;
+    position: relative;
+    width: fit-content;
+    height: fit-content;
 }
+.nav a {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.87);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: "Avenir Next", sans-serif;
+    filter: drop-shadow(0 0 0.5rem rgba(247, 247, 247, 0.5));
+    transition: 0.3s ease-in-out all;
+    backface-visibility: hidden;
+    padding: 0.25rem 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+.stalker {
+    position: absolute;
+    width: 100%;
+    border-radius: 0.25rem;
+    background-color: transparent;
+    border: 3px solid rgba(215, 29, 29, 0.87);
+    z-index: 1;
+    transition: 0.3s ease-in-out all;
+    pointer-events: none;
+}
+.nav a:hover {
+    color: #6f1010;
+}
+
 .webGl-slider__title {
     font-size: 3.5rem;
     font-weight: 500;
@@ -157,4 +192,135 @@ body {
 
 .gooeyCursor svg {
     display: none;
+}
+.nav-container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.nav-container a {
+    position: relative;
+    z-index: 1;
+}
+.nav-grid {
+    position: absolute;
+    transform: rotateX(0);
+    transform-style: preserve-3d;
+    will-change: transform;
+    height: 100%;
+    width: 100%;
+    display: grid;
+    /* --cols, --rows */
+    grid-template-columns: repeat(var(--cols, 1), 1fr);
+    grid-template-rows: repeat(var(--rows, 1), 1fr);
+    top: 0;
+    grid-gap: 0.15rem;
+    overflow: hidden;
+}
+.grid-item[data-hover="true"] {
+    transition: none;
+    transform-style: preserve-3d;
+}
+.grid-item {
+    position: relative;
+    transform: rotateX(0);
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+/* .grid-item__panel[data-hover="true"] [data-panel-item="front"] {
+    animation: rotate-front 1s linear forwards;
+    transition-delay: 0.01s;
+    transition-duration: 0.05s;
+}
+.grid-item__panel[data-hover="true"] [data-panel-item="back"] {
+    animation: rotate-back 1s linear forwards;
+    transition-delay: 0.01s;
+    transition-duration: 0.05s;
+} */
+.grid-item__panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    border-radius: min(min(10px, 0.625vw), min(10px, 1.002004008vh));
+    backface-visibility: hidden;
+}
+.grid-item[data-hover="true"] {
+    transition: none;
+    transform-style: preserve-3d;
+}
+[data-resize="true"] .grid-item {
+    background-image: none !important;
+    background-image: initial !important;
+}
+.grid-item[data-hover="true"] [data-panel-item="front"] {
+    animation: rotate-front 1s linear forwards;
+}
+.grid-item[data-hover="true"] [data-panel-item="back"] {
+    animation: rotate-back 1s linear forwards;
+}
+
+.grid-item__panel[data-panel-item="front"] {
+    background-color: #1c1d21;
+    transform: rotateX(360deg);
+}
+
+.grid-item__panel[data-panel-item="back"] {
+    background-color: #bd1212;
+    transform: rotateX(180deg);
+}
+
+/* Animations */
+
+@keyframes rotate-back {
+    0% {
+        transform: rotateX(180deg);
+    }
+
+    22% {
+        transform: rotateX(0);
+    }
+
+    47% {
+        transform: rotateX(-220deg);
+    }
+
+    80% {
+        transform: rotateX(-170deg);
+    }
+
+    to {
+        transform: rotateX(-180deg);
+        opacity: 0;
+    }
+}
+
+@keyframes rotate-front {
+    0% {
+        transform: rotateX(360deg);
+    }
+
+    22% {
+        transform: rotateX(180deg);
+    }
+
+    47% {
+        transform: rotateX(-40deg);
+    }
+
+    80% {
+        transform: rotateX(10deg);
+    }
+
+    to {
+        transform: rotateX(0);
+    }
 }

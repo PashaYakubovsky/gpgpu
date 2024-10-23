@@ -1,7 +1,7 @@
 import "./index.css";
-
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Navigation from "./Navigation";
 import Wrapper, { SketchList } from "./Wrapper";
 import { rickroll } from "./rickroll";
 
@@ -10,16 +10,7 @@ const rootEl = document.getElementById("root");
 const router = createBrowserRouter([
     {
         path: "/",
-        element: (
-            <nav className="nav">
-                <a href={"/" + SketchList["GPGPU"]}>GPGPU City</a>
-                <a href={"/" + SketchList["R3FB"]}>螺旋</a>
-                <a href={"/" + SketchList["Particle emitter"]}>Flying Emitters</a>
-                <a href={"/" + SketchList["R3FGPGPU"]}>GPGPU Maze</a>
-                <a href={"/" + SketchList["WebGLSlider"]}>WebGl slider</a>
-                <a href={"/" + SketchList["Bounce"]}>Physics</a>
-            </nav>
-        ),
+        element: <Navigation />,
     },
     {
         path: "/" + SketchList.GPGPU,
