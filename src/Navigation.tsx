@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SketchList } from "./Wrapper";
 import t1 from "./assets/3.jpg?url";
-import t2 from "./assets/me.png?url";
+import t2 from "./assets/61734.png?url";
 
 const itemWidth = 250;
 const itemHeight = 150;
