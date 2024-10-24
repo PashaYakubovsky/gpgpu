@@ -289,6 +289,10 @@ class Sketch {
         if (this.vs) {
             this.vs.destroy();
         }
+        this.titlesDom.forEach(dom => {
+            dom.remove();
+        });
+        this.titlesDom = [];
 
         window.removeEventListener("resize", this.resize.bind(this));
     }

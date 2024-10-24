@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SketchList } from "./Wrapper";
 import t1 from "./assets/3.jpg?url";
 import t2 from "./assets/61734.png?url";
+import debounce from "lodash.debounce";
+import { useNavigate } from "react-router-dom";
 
 const itemWidth = 250;
 const itemHeight = 150;
+const isDev = import.meta.env.DEV;
 
 const Navigation = () => {
+    const navigate = useNavigate();
     const gridRef = useRef<HTMLDivElement>(null);
     const [total, setTotal] = useState({
         cols: Math.floor(window.innerWidth / itemWidth),
@@ -92,55 +96,100 @@ const Navigation = () => {
         gridItems[randomIndex].dataset.hover = "true";
 
         // set hover to false after 1s
-        setTimeout(() => {
+        debounce(() => {
             gridItems[randomIndex].dataset.hover = "false";
-        }, 1000);
+        }, 1000)();
+    };
+
+    const wait = async (ms: number) => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
+    const handleBeforeStart = async () => {
+        const gridItems = gridRef.current?.querySelectorAll(
+            ".grid-item"
+        ) as NodeListOf<HTMLDivElement>;
+
+        for (let i = 0; i < gridItems.length; i++) {
+            const gridItem = gridItems[i];
+
+            if (gridItem.dataset.hover === "true") {
+                gridItem.dataset.hover = "false";
+                await wait(10);
+            }
+            gridItem.dataset.hover = "true";
+            await wait(10);
+        }
+    };
+
+    const handleGo = async (e: React.MouseEvent, path: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        handleBeforeStart();
+        await wait(600);
+        navigate(path);
     };
 
     const stalkerRef = useRef<HTMLSpanElement>(null);
 
     const handleMouseEnter = (e: React.MouseEvent) => {
-        const rect = e.target?.getBoundingClientRect() as DOMRect;
+        if (e.target instanceof HTMLElement) {
+            const rect = e.target?.getBoundingClientRect() as DOMRect;
 
-        // set width and height of the stalker
-        const w = rect.width + 8;
-        const h = rect.height + 8;
-        stalkerRef.current!.style.width = `${w}px`;
-        stalkerRef.current!.style.height = `${h}px`;
+            // set width and height of the stalker
+            const w = rect.width + 8;
+            const h = rect.height + 8;
+            stalkerRef.current!.style.width = `${w}px`;
+            stalkerRef.current!.style.height = `${h}px`;
 
-        // set position of the stalker
-        const top = rect.top - 4;
-        const left = rect.left - 4;
-        stalkerRef.current!.style.top = `${top}px`;
-        stalkerRef.current!.style.left = `${left}px`;
+            // set position of the stalker
+            const top = rect.top - 4;
+            const left = rect.left - 4;
+            stalkerRef.current!.style.top = `${top}px`;
+            stalkerRef.current!.style.left = `${left}px`;
+        }
     };
 
     return (
         <div
-            onMouseEnter={e => {
+            onMouseEnter={() => {
                 gridRef.current.dataset.hover = "true";
             }}
-            onMouseLeave={e => {
+            onMouseLeave={() => {
                 gridRef.current.dataset.hover = "false";
             }}
             className="nav-container">
             <nav className="nav">
-                <a onMouseEnter={handleMouseEnter} href={"/" + SketchList["GPGPU"]}>
+                <a
+                    onClick={e => handleGo(e, "/" + SketchList["GPGPU"])}
+                    onMouseEnter={handleMouseEnter}
+                    href={"/" + SketchList["GPGPU"]}>
                     GPGPU City
                 </a>
-                <a onMouseEnter={handleMouseEnter} href={"/" + SketchList["R3FB"]}>
+                <a
+                    onClick={e => handleGo(e, "/" + SketchList["R3FB"])}
+                    onMouseEnter={handleMouseEnter}
+                    href={"/" + SketchList["R3FB"]}>
                     螺旋
                 </a>
-                <a onMouseEnter={handleMouseEnter} href={"/" + SketchList["Particle emitter"]}>
+                <a
+                    onClick={e => handleGo(e, "/" + SketchList["Particle emitter"])}
+                    onMouseEnter={handleMouseEnter}
+                    href={"/" + SketchList["Particle emitter"]}>
                     Flying Emitters
                 </a>
-                <a onMouseEnter={handleMouseEnter} href={"/" + SketchList["R3FGPGPU"]}>
+                <a
+                    onClick={e => handleGo(e, "/" + SketchList["R3FGPGPU"])}
+                    onMouseEnter={handleMouseEnter}
+                    href={"/" + SketchList["R3FGPGPU"]}>
                     GPGPU Maze
                 </a>
-                <a onMouseEnter={handleMouseEnter} href={"/" + SketchList["WebGLSlider"]}>
+                <a
+                    onClick={e => handleGo(e, "/" + SketchList["WebGLSlider"])}
+                    onMouseEnter={handleMouseEnter}
+                    href={"/" + SketchList["WebGLSlider"]}>
                     WebGl slider
                 </a>
-                {import.meta.env.DEV && (
+                {isDev && (
                     <a onMouseEnter={handleMouseEnter} href={"/" + SketchList["Bounce"]}>
                         Physics
                     </a>

@@ -43,7 +43,7 @@ const Floor = () => {
         <mesh ref={ref} receiveShadow castShadow>
             {/* floor */}
             <planeGeometry args={[100, 100]} />
-            <meshStandardMaterial color="white" />
+            <meshPhysicalMaterial roughness={0.2} metalness={0.5} color="white" />
         </mesh>
     );
 };

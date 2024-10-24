@@ -19,10 +19,11 @@ const Sketch = memo(() => {
             <OrbitControls enableDamping />
             {/* <Particles /> */}
             <Bounce />
+            <Environment preset="park" />
 
-            <color attach="background" args={["#171720"]} />
+            <color attach="background" args={["#000"]} />
             <ambientLight intensity={0.1} />
-            <pointLight args={[0xff0000, 10, 100]} position={[-1, 3, 1]} castShadow />
+            <pointLight args={[0xff0000, 100, 100]} position={[-1, 5, 1]} castShadow />
             <spotLight castShadow args={["blue", 10, 100]} penumbra={1} />
 
             <PerspectiveCamera
