@@ -164,6 +164,7 @@ class Scene {
     setupDebug() {
         this.guiPane = new Pane({
             title: "Config",
+            expanded: false,
         });
         this.guiPane.registerPlugin(EssentialsPlugin);
 
