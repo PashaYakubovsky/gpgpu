@@ -4,6 +4,8 @@ uniform sampler2D uVelocity;
 
 varying vec2 vUv;
 attribute vec2 ref;
+varying vec3 vvColor;
+
 
 vec3 rotate3D(vec3 v, vec3 vel) {
     vec3 newpos = v;
@@ -16,9 +18,9 @@ vec3 rotate3D(vec3 v, vec3 vel) {
 
 
 void main() {
-    vec4 color = texture2D(uPosition, ref);
+    vec4 text = texture2D(uPosition, ref);
     vec4 velocity = texture2D(uVelocity, ref);
-    vec3 newpos = color.xyz;
+    vec3 newpos = text.xyz;
 
     vec3 pos = position;
 

@@ -2,6 +2,8 @@ uniform sampler2D uPosition;
 uniform sampler2D uVelocity;
 uniform sampler2D uMatcap;
 
+varying vec3 vvColor;
+
 float remap(float value, float inputMin, float inputMax, float outputMin, float outputMax) {
     return outputMin + ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin));
 }

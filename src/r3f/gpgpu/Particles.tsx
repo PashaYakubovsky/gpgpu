@@ -14,7 +14,7 @@ import * as THREE from "three";
 import { GPUComputationRenderer, Variable } from "three/addons/misc/GPUComputationRenderer.js";
 import CustomShaderMaterial from "three-custom-shader-material";
 
-import matcap from "../../assets/matcap.jpg";
+import matcap from "../../assets/mapcat3.png";
 import { DRACOLoader, GLTFLoader } from "three/examples/jsm/Addons.js";
 
 // Particles data
@@ -54,7 +54,7 @@ const Particles = () => {
 
     // gltf loader with draco
     // const gltfLoader = useLoader(GLTFLoader, '/maze.glb', )
-    const gltfLoader = useLoader(GLTFLoader, "/maze.glb", loader => {
+    const gltfLoader = useLoader(GLTFLoader, "/maze2.glb", loader => {
         const draco = new DRACOLoader();
         draco.setDecoderConfig({ type: "js" });
         draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
@@ -89,8 +89,8 @@ const Particles = () => {
     }, []);
 
     useEffect(() => {
-        const mesh = gltfLoader.scene.children[0] as THREE.Mesh;
-        mesh.geometry.scale(0.1, 0.1, 0.1);
+        const mesh = gltfLoader.scene.getObjectByName("model") as THREE.Mesh;
+        mesh.geometry.scale(20, 20, 20);
         raycastMesh.current.geometry = mesh.geometry;
         const positions = getPointsFromObject(mesh, size);
         const velocities = generateVelocityTexture(size);
@@ -167,13 +167,15 @@ const Particles = () => {
     return (
         <>
             <instancedMesh ref={iRef} args={[null, null, count]} frustumCulled={false}>
-                <boxGeometry args={[0.1, 0.1, 0.1]} />
+                <boxGeometry args={[0.4, 0.4, 0.4]} />
                 <CustomShaderMaterial
-                    baseMaterial={THREE.MeshStandardMaterial}
+                    baseMaterial={THREE.MeshPhysicalMaterial}
                     vertexShader={patchShaders(vertexShader)}
                     fragmentShader={patchShaders(fragmentShader)}
                     uniforms={uniforms}
                     transparent
+                    roughness={1}
+                    vertexColors
                 />
             </instancedMesh>
 

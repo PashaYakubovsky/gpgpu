@@ -70,43 +70,6 @@ const Wrapper = ({ type }: { type: string }) => {
                     </button>
                 )}
             </div>
-            {/* <nav className="navigation">
-                <button
-                    className={type === SketchList["Particle emitter"] ? "active" : ""}
-                    onClick={() => handleClick(SketchList["Particle emitter"])}>
-                    Flying emitters
-                </button>
-
-                <button
-                    className={type === SketchList["GPGPU"] ? "active" : ""}
-                    onClick={() => handleClick(SketchList["GPGPU"])}>
-                    GPGPU city
-                </button>
-
-                <button
-                    className={type === SketchList["R3FB"] ? "active" : ""}
-                    onClick={() => handleClick(SketchList["R3FB"])}>
-                    螺旋
-                </button>
-
-                <button
-                    className={type === SketchList["R3FGPGPU"] ? "active" : ""}
-                    onClick={() => handleClick(SketchList["R3FGPGPU"])}>
-                    GPGPU Maze
-                </button>
-
-                <button
-                    className={type === SketchList.WebGLSlider ? "active" : ""}
-                    onClick={() => handleClick(SketchList.WebGLSlider)}>
-                    WebGL Slider
-                </button>
-
-                <button
-                    className={type === SketchList.Bounce ? "active" : ""}
-                    onClick={() => handleClick(SketchList.Bounce)}>
-                    Bounce
-                </button>
-            </nav> */}
         </>
     );
 };

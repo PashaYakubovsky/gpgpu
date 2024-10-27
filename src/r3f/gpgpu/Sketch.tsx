@@ -24,18 +24,10 @@ const Sketch = memo(() => {
             <directionalLight intensity={0.5} position={[0, 0, -5]} color="red" />
             <directionalLight intensity={0.5} position={[0, 5, 0]} color="blue" />
 
-            <Environment preset="dawn" />
-
             <Stats />
+            <Environment preset="park" />
 
-            <PerspectiveCamera
-                makeDefault
-                position={[-3, 50, 0]}
-                fov={75}
-                aspect={window.innerWidth / window.innerHeight}
-                near={0.1}
-                far={1000}
-            />
+            <PerspectiveCamera makeDefault position={[-3, 50, 0]} fov={75} near={0.1} far={10000} />
         </Canvas>
     );
 });

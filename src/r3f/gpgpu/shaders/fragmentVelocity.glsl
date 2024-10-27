@@ -14,9 +14,9 @@ void main() {
     vec3 original = texture2D(uOriginalPositionTexture, uv).xyz;
     float offset = rand(uv);
 
-    velocity *= 0.9;
+    velocity *= 0.8;
 
-    vec3 n = gln_curl(position) * .01;
+    vec3 n = gln_curl(position) * .1;
 
     // particle attraction to shape force
     vec3 direction = normalize( original - position );
@@ -27,13 +27,12 @@ void main() {
 
     // mouse repel force
     float mouseDistance = distance( position, uMouse );
-    float maxDistance = 20.0;
+    float maxDistance = 60.0;
     if( mouseDistance < maxDistance ) {
-        // vec3 direction = normalize( position - uMouse );
-        // velocity.xyz += direction * (1.0 - (mouseDistance / maxDistance)) * .7;
-        velocity.xyz = original - position;
+        vec3 direction = normalize( position - uMouse );
+        velocity.xyz += direction * (1.0 - (mouseDistance / maxDistance)) * 4.7 + n * 10.;
     } else {
-        velocity.xyz += n*100.4;
+        velocity.xyz += n*1.4;
     }
 
 

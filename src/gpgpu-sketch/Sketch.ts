@@ -9,17 +9,6 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 
-// import {
-//     color,
-//     fog,
-//     float,
-//     positionWorld,
-//     triNoise3D,
-//     positionView,
-//     normalWorld,
-//     uniform,
-// } from "three/tsl";
-
 import fragmentShader from "./shaders/fragment.glsl";
 import vertexInstanceShader from "./shaders/vertexInstance.glsl";
 import simFragmentShader from "./shaders/simFragment.glsl";
@@ -34,7 +23,9 @@ import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 import { RGBShiftShader } from "three/examples/jsm/Addons.js";
 
-import gui from "lil-gui";
+import { BladeApi, Pane } from "tweakpane";
+import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
+
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 import gsap from "gsap";
 
@@ -67,7 +58,8 @@ class Scene {
     private positionsSampled2?: THREE.DataTexture;
     private raycaster?: THREE.Raycaster;
     private raycastPlane?: THREE.Mesh;
-    private gui?: gui;
+    private guiPane?: Pane;
+    private fpsGraph: BladeApi;
     private stats?: Stats;
     private container?: HTMLElement;
 
@@ -103,6 +95,9 @@ class Scene {
     constructor({ dom }: { dom: HTMLElement }) {
         this.container = dom;
 
+        this.size = Number.parseInt(localStorage.getItem("gpgpu-city-size")) || 256;
+        this.count = this.size * this.size;
+
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(
             75,
@@ -118,8 +113,6 @@ class Scene {
         this.renderer.setClearColor(0x000000, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-        // this.renderer.shadowMap.enabled = true;
-        // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.setPixelRatio(Math.max(2, window.devicePixelRatio));
 
         this.camera.position.set(3, 4, -3);
@@ -169,105 +162,90 @@ class Scene {
     }
 
     setupDebug() {
-        this.gui = new gui();
+        this.guiPane = new Pane({
+            title: "Config",
+        });
+        this.guiPane.registerPlugin(EssentialsPlugin);
 
-        this.gui
-            .add(this.debugObj, "progress", 0, 1)
-            .onChange((value: number) => {
+        // FPS graph
+        this.fpsGraph = this.guiPane.addBlade({
+            view: "fpsgraph",
+            label: "fpsgraph",
+        });
+
+        this.guiPane
+            .addBinding(this.debugObj, "progress", {
+                min: 0,
+                max: 1,
+            })
+            .on("change", ev => {
+                const value = ev.value;
                 if (!this.positionUniforms || !this.velocityUniforms) return;
                 this.positionUniforms.uProgress.value = value;
                 this.velocityUniforms.uProgress.value = value;
+            });
+        const sizeItem = this.guiPane
+            .addBinding(this, "size", {
+                min: 0,
+                max: 1024,
             })
-            .name("Progress");
-
-        let isGuiVisible = true;
-        this.gui
-            .add(
-                {
-                    toggleGui: () => {
-                        this.stats.dom.style.display = isGuiVisible ? "none" : "block";
-                        isGuiVisible = !isGuiVisible;
-                    },
-                },
-                "toggleGui"
-            )
-            .name("Toggle Stats");
-
-        // wireframe
-        this.gui.add(this.mesh?.material, "wireframe").name("Wireframe cubes");
-        this.gui.add(this.targetObject.material, "wireframe").name("Wireframe buildings");
-
-        // fog
-        this.gui.add(this.scene.fog, "near", 0, 50).name("Fog near");
-        this.gui.add(this.scene.fog, "far", 0, 50).name("Fog far");
-
-        // lights
-        this.gui.add(this.rectLight1, "intensity", 0, 10).name("Light 1 intensity");
-        this.gui.add(this.rectLight2, "intensity", 0, 10).name("Light 2 intensity");
-
-        // post processing
-        const obj = {
-            rgbShift: true,
-            fxaa: true,
-        };
-        const folder = this.gui.addFolder("Post Processing");
-        folder
-            .add(obj, "fxaa")
-            .name("FXAA enabled")
-            .onChange(() => {
-                this.fxaaPass.enabled = !this.fxaaPass.enabled;
+            .on("change", ev => {
+                const val = ev.value;
+                localStorage.setItem("gpgpu-city-size", String(val));
+                sizeItem.label = "Refresh page to apply new progress";
             });
+        this.guiPane.addBinding(this.mesh.material, "wireframe").label = "Wireframe cubes";
+        this.guiPane.addBinding(this.targetObject.material, "wireframe").label =
+            "Wireframe buildings";
 
-        folder
-            .add(this.rgbShift.material.uniforms["amount"], "value", 0, 0.1)
-            .name("RGB Shift amount");
-        folder
-            .add(obj, "rgbShift")
-            .name("RGB Shift enabled")
-            .onChange(() => {
-                this.rgbShift.enabled = !this.rgbShift.enabled;
-            });
+        const fogFolder = this.guiPane.addFolder({
+            title: "Fog",
+        });
+        fogFolder.addBinding(this.scene.fog, "near", {
+            min: 0,
+            max: 50,
+        }).label = "Fog near";
+        fogFolder.addBinding(this.scene.fog, "far", {
+            min: 0,
+            max: 50,
+        }).label = "Fog far";
 
-        this.stats = new Stats();
-        this.stats.showPanel(0);
-        document.body.appendChild(this.stats.dom);
+        const lightFolder = this.guiPane.addFolder({
+            title: "Lights",
+        });
+        lightFolder.addBinding(this.rectLight1, "intensity", {
+            min: 0,
+            max: 10,
+        }).label = "Light 1 intensity";
+        lightFolder.addBinding(this.rectLight2, "intensity", {
+            min: 0,
+            max: 10,
+        }).label = "Light 2 intensity";
+
+        const postProcessingFolder = this.guiPane.addFolder({
+            title: "Post Processing",
+        });
+        const fxaaBtn = postProcessingFolder.addButton({
+            title: "Toggle FXAA",
+        });
+        fxaaBtn.on("click", () => {
+            this.fxaaPass.enabled = !this.fxaaPass.enabled;
+            fxaaBtn.label = this.fxaaPass.enabled ? "FXAA enabled" : "FXAA disabled";
+        });
+        const rgbShiftBtn = postProcessingFolder.addButton({
+            title: "Toggle RGB shift",
+        });
+        rgbShiftBtn.on("click", () => {
+            this.rgbShift.enabled = !this.rgbShift.enabled;
+            rgbShiftBtn.label = this.rgbShift.enabled ? "RGB shift enabled" : "RGB shift disabled";
+        });
+        postProcessingFolder.addBinding(this.rgbShift.material.uniforms["amount"], "value", {
+            min: 0,
+            max: 0.1,
+        }).label = "RGB Shift amount";
     }
 
     setupFog() {
-        // custom fog
-
-        // const skyColor = color(0xf0f5f5);
-        // const groundColor = color(0xd0dee7);
-
-        // const fogNoiseDistance = positionView.z.negate().smoothstep(0, 100);
-        // const distance = fogNoiseDistance.mul(20).max(4);
-        // const alpha = 0.98;
-        // const groundFogArea = float(distance)
-        //     .sub(positionWorld.y)
-        //     .div(distance)
-        //     .pow(3)
-        //     .saturate()
-        //     .mul(alpha);
-
-        // // a alternative way to create a TimerNode
-        // const timer = uniform(0).onFrameUpdate(frame => frame.time);
-
-        // const fogNoiseA = triNoise3D(positionWorld.mul(0.005), 0.2, timer);
-        // const fogNoiseB = triNoise3D(positionWorld.mul(0.01), 0.2, timer.mul(1.2));
-
-        // const fogNoise = fogNoiseA.add(fogNoiseB).mul(groundColor);
-
-        // // apply custom fog
-
-        // this.scene.fogNode = fog(
-        //     fogNoiseDistance.oneMinus().mix(groundColor, fogNoise),
-        //     groundFogArea
-        // );
-        // this.scene.backgroundNode = normalWorld.y.max(0).mix(groundColor, skyColor);
-
-        // this.scene.fog = new THREE.FogExp2(0xefd1b5, 0.0025);
-        // this.scene.fog.density = 0.001;
-
         this.scene.fog = new THREE.Fog(new THREE.Color("red"), 5, 50);
     }
 
@@ -286,45 +264,6 @@ class Scene {
                 this.velocityUniforms.uProgress.value = this.debugObj.progress;
             }
         }, 2000);
-
-        // const mixer = new THREE.AnimationMixer(this.scene);
-        // this.mixer = mixer;
-
-        // this.camera = gltf.scene.children.find(
-        //     child => child instanceof THREE.Camera
-        // ) as THREE.PerspectiveCamera;
-
-        // this.camera.name = "Camera";
-        // this.camera.aspect = window.innerWidth / window.innerHeight;
-        // this.camera.fov = 80;
-        // this.camera.near = 0.01;
-        // this.camera.far = 1000;
-        // this.camera.updateProjectionMatrix();
-
-        // const clips = gltf.animations;
-        // const action = mixer.clipAction(clips[0]);
-        // action.loop = THREE.LoopOnce;
-        // action.clampWhenFinished = true;
-        // action.timeScale = 1.33;
-        // action.play();
-
-        // this.mixer.addEventListener("finished", () => {
-        //     // this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        //     // this.controls.enableDamping = true;
-        //     if (this.controls) {
-        //         this.controls.dispose();
-        //     }
-        //     this.controls = new MapControls(this.camera, this.renderer.domElement);
-        //     this.controls.enableDamping = true;
-        //     this.controls.zoomSpeed = 0.5;
-        //     this.controls.target.set(0, 0, 0);
-
-        //     if (this.positionUniforms && this.velocityUniforms) {
-        //         this.debugObj.progress = 0.0;
-        //         this.positionUniforms.uProgress.value = this.debugObj.progress;
-        //         this.velocityUniforms.uProgress.value = this.debugObj.progress;
-        //     }
-        // });
     }
 
     fillVelocityTexture(texture: THREE.DataTexture) {
@@ -483,31 +422,6 @@ class Scene {
         rectLight2.rotateX(-Math.PI / 2);
         this.scene.add(rectLight2);
         this.rectLight2 = rectLight2;
-
-        // helpres
-        // const helper1 = new RectAreaLightHelper(rectLight1);
-        // this.scene.add(helper1);
-
-        // const helper2 = new RectAreaLightHelper(rectLight2);
-        // this.scene.add(helper2);
-
-        // const dirLight = new THREE.DirectionalLight("#fff", 10);
-        // dirLight.position.set(0, 0, -2);
-        // dirLight.lookAt(0, 0, 0);
-        // dirLight.castShadow = false;
-
-        // //Set up shadow properties for the light
-        // dirLight.shadow.mapSize.width = 512; // default
-        // dirLight.shadow.mapSize.height = 512; // default
-        // dirLight.shadow.camera.near = -10; // default
-        // dirLight.shadow.camera.far = 5; // default
-
-        // dirLight.shadow.camera.left = -5;
-        // dirLight.shadow.camera.right = 5;
-        // dirLight.shadow.camera.top = 5;
-        // dirLight.shadow.camera.bottom = -5;
-
-        // this.scene.add(dirLight);
     }
 
     setupPostProcessing() {
@@ -603,6 +517,9 @@ class Scene {
 
     clock = new THREE.Clock();
     private animate() {
+        if (this.fpsGraph) {
+            this.fpsGraph.begin();
+        }
         const elapsedTime = this.clock.getElapsedTime();
         this.gpuCompute.compute();
 
@@ -644,6 +561,9 @@ class Scene {
             this.stats.update();
         }
 
+        if (this.fpsGraph) {
+            this.fpsGraph.end();
+        }
         this.rafId = requestAnimationFrame(() => this.animate());
     }
 
@@ -749,11 +669,11 @@ class Scene {
         if (this.gpuCompute) {
             this.gpuCompute.dispose();
         }
-        if (this.gui) {
-            this.gui.destroy();
-        }
         if (this.stats) {
             this.stats.dom.remove();
+        }
+        if (this.guiPane) {
+            this.guiPane.dispose();
         }
 
         this.container?.removeChild(this.renderer.domElement);
@@ -790,12 +710,8 @@ class GeometryMerger {
             color: new THREE.Color("black"),
             roughness: 0.3,
             metalness: 1,
-            // transparent: true,
             side: THREE.DoubleSide,
             envMap: matcapTexture,
-            // ior: 2.1,
-            // emissive: new THREE.Color("white"),
-            // emissiveIntensity: 0.05,
         });
 
         scene.traverse(child => {
