@@ -13,8 +13,9 @@ import fragmentShader from "./shaders/fragment.glsl";
 import vertexInstanceShader from "./shaders/vertexInstance.glsl";
 import simFragmentShader from "./shaders/simFragment.glsl";
 import simVelocityShader from "./shaders/simVelocity.glsl";
-import matcap from "../assets/matcap.jpg";
-import matcap2 from "../assets/matcap2.jpg";
+import matcap from "../assets/matcap.jpg?url";
+import matcap2 from "../assets/matcap2.jpg?url";
+import skyboxImg from "../assets/skybox.webp?url";
 
 // post processing
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
@@ -28,6 +29,7 @@ import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 import gsap from "gsap";
+import CustomShaderMaterial from "three-custom-shader-material/vanilla";
 
 const lerp = (start: number, end: number, t: number) => {
     return start * (1 - t) + end * t;
@@ -142,12 +144,74 @@ class Scene {
             this.setupFog();
             this.setupPostProcessing();
 
+            this.addSky();
             this.setupDebug();
-
+            this.animate.bind(this);
             this.animate();
 
             window.addEventListener("resize", this.resize.bind(this));
         });
+    }
+
+    async addSky() {
+        const texture = new THREE.TextureLoader().load(skyboxImg);
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        texture.flipY = true;
+        const sphereMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTexture: new THREE.Uniform(texture),
+                uTime: new THREE.Uniform(0),
+            },
+            fragmentShader: `
+                uniform sampler2D uTexture;
+                varying vec2 vUv;
+                uniform float uTime;
+
+                void main() {
+                    vec2 uv = vUv;
+                    uv.x = mod(uv.x + uTime * 0.01, 1.0); // Infinite rotation by x-axis
+                    vec4 skybox = texture2D(uTexture, uv);
+                    vec4 color = vec4(1.);
+                    color.rgb = skybox.rgb;
+                    gl_FragColor = color;
+                }
+            `,
+            vertexShader: `
+                varying vec3 vNormal;
+                varying vec2 vUv;
+                uniform float uTime;
+
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    vUv = uv;
+                    vec3 pos = position;
+                    pos.x += sin(pos.y * 10.0 + uTime) * 0.2; // Wobble effect
+                    pos.y += sin(pos.x * 10.0 + uTime) * 0.2; // Wobble effect
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            side: THREE.DoubleSide,
+        });
+        this.skyboxMaterial = sphereMat;
+        const sphereGeo = new THREE.SphereGeometry(50, 32, 32);
+        const sphere = new THREE.Mesh(sphereGeo, this.skyboxMaterial);
+        this.scene.background = texture;
+        this.scene.environment = texture;
+        // this.scene.add(sphere);
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(100, 100),
+            new THREE.MeshStandardMaterial({
+                side: THREE.DoubleSide,
+                color: "gray",
+            })
+        );
+        floor.position.y = -3;
+        floor.rotateX(Math.PI / 2);
+        this.scene.add(floor);
     }
 
     centerMap() {
@@ -195,9 +259,9 @@ class Scene {
                 localStorage.setItem("gpgpu-city-size", String(val));
                 sizeItem.label = "Refresh page to apply new progress";
             });
-        this.guiPane.addBinding(this.mesh.material, "wireframe").label = "Wireframe cubes";
-        this.guiPane.addBinding(this.targetObject.material, "wireframe").label =
-            "Wireframe buildings";
+        // this.guiPane.addBinding(this.mesh.material, "wireframe").label = "Wireframe cubes";
+        // this.guiPane.addBinding(this.targetObject.material, "wireframe").label =
+        //     "Wireframe buildings";
 
         const fogFolder = this.guiPane.addFolder({
             title: "Fog",
@@ -244,10 +308,45 @@ class Scene {
             min: 0,
             max: 0.1,
         }).label = "RGB Shift amount";
+
+        const materialFolder = this.guiPane.addFolder({
+            title: "Point Light Helper Material",
+        });
+
+        materialFolder.addBinding(this.pointLightHelper.material, "roughness", {
+            min: 0,
+            max: 1,
+        }).label = "Roughness";
+
+        materialFolder.addBinding(this.pointLightHelper.material, "metalness", {
+            min: 0,
+            max: 1,
+        }).label = "Metalness";
+
+        materialFolder.addBinding(this.pointLightHelper.material, "transmission", {
+            min: 0,
+            max: 1,
+        }).label = "Transmission";
+
+        materialFolder.addBinding(this.pointLightHelper.material, "emissiveIntensity", {
+            min: 0,
+            max: 1,
+        }).label = "Emissive Intensity";
+
+        materialFolder.addBinding(this.pointLightHelper.material, "ior", {
+            min: 1,
+            max: 2.5,
+        }).label = "IOR";
+
+        materialFolder.addBinding(this.pointLightHelper.material, "transparent").label =
+            "Transparent";
+
+        materialFolder.addBinding(this.pointLightHelper.material, "emissive").label =
+            "Emissive Color";
     }
 
     setupFog() {
-        this.scene.fog = new THREE.Fog(new THREE.Color("red"), 5, 50);
+        this.scene.fog = new THREE.Fog(new THREE.Color("gray"), 5, 50);
     }
 
     setupMixer() {
@@ -416,13 +515,37 @@ class Scene {
         rectLight1.position.set(0, 10, 5);
         rectLight1.rotateX(-Math.PI / 4);
         this.rectLight1 = rectLight1;
-        this.scene.add(rectLight1);
+        // this.scene.add(rectLight1);
 
         const rectLight2 = new THREE.RectAreaLight("red", 3, 20, 20);
-        rectLight2.position.set(10, 10, -10);
+        rectLight2.position.set(0, 0, 0);
         rectLight2.rotateX(-Math.PI / 2);
-        this.scene.add(rectLight2);
         this.rectLight2 = rectLight2;
+        this.scene.add(rectLight2);
+
+        const pointLight = new THREE.PointLight("gray", 10, 50);
+        this.scene.add(pointLight);
+        pointLight.position.y = 5;
+        this.pointLight = pointLight;
+        const pointLightHelper = new THREE.PointLightHelper(pointLight);
+        pointLightHelper.material = new CustomShaderMaterial({
+            baseMaterial: THREE.MeshPhysicalMaterial,
+            roughness: 0,
+            metalness: 0,
+            transmission: 0.8,
+            emissive: new THREE.Color("blue"),
+            emissiveIntensity: 0.05,
+            ior: 2.2,
+            transparent: true,
+            envMap: null,
+            clearcoat: 0.5,
+        });
+        this.pointLightHelper = pointLightHelper;
+
+        this.scene.add(pointLightHelper);
+
+        console.log(pointLightHelper);
+        this.scene.add(pointLightHelper);
     }
 
     setupPostProcessing() {
@@ -537,6 +660,10 @@ class Scene {
         }
         if (this.velocityUniforms) {
             this.velocityUniforms.time.value = elapsedTime;
+        }
+        if (this.pointLight) {
+            this.pointLight.position.y = 5 + Math.sin(elapsedTime * 0.1) * 2;
+            this.pointLight.rotation.z = Math.sin(elapsedTime * 0.1) * 2;
         }
 
         if (this.mesh?.material) {
@@ -707,12 +834,9 @@ class GeometryMerger {
         matcapTexture.magFilter = THREE.LinearFilter;
         matcapTexture.mapping = THREE.EquirectangularReflectionMapping;
 
-        const material = new THREE.MeshPhysicalMaterial({
-            color: new THREE.Color("black"),
-            roughness: 0.3,
-            metalness: 1,
-            side: THREE.DoubleSide,
-            envMap: matcapTexture,
+        const material = new THREE.MeshPhongMaterial({
+            side: THREE.FrontSide,
+            flatShading: true,
         });
 
         scene.traverse(child => {
