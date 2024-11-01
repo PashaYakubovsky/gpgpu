@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import * as THREE from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
@@ -86,6 +87,10 @@ class Scene {
     private composer?: EffectComposer;
     private fxaaPass?: ShaderPass;
     private rgbShift?: ShaderPass;
+
+    private pointLightHelper: THREE.PointLightHelper;
+    private skyboxMaterial: THREE.ShaderMaterial;
+    private pointLight: THREE.PointLight;
 
     debugObj = {
         progress: 0.01,
@@ -197,11 +202,10 @@ class Scene {
             side: THREE.DoubleSide,
         });
         this.skyboxMaterial = sphereMat;
-        const sphereGeo = new THREE.SphereGeometry(50, 32, 32);
-        const sphere = new THREE.Mesh(sphereGeo, this.skyboxMaterial);
+
         this.scene.background = texture;
         this.scene.environment = texture;
-        // this.scene.add(sphere);
+
         const floor = new THREE.Mesh(
             new THREE.PlaneGeometry(100, 100),
             new THREE.MeshStandardMaterial({
@@ -266,11 +270,12 @@ class Scene {
         const fogFolder = this.guiPane.addFolder({
             title: "Fog",
         });
-        fogFolder.addBinding(this.scene.fog, "near", {
+        const fog = this.scene.fog as THREE.Fog;
+        fogFolder.addBinding(fog, "near", {
             min: 0,
             max: 50,
         }).label = "Fog near";
-        fogFolder.addBinding(this.scene.fog, "far", {
+        fogFolder.addBinding(fog, "far", {
             min: 0,
             max: 50,
         }).label = "Fog far";
@@ -309,40 +314,99 @@ class Scene {
             max: 0.1,
         }).label = "RGB Shift amount";
 
-        const materialFolder = this.guiPane.addFolder({
-            title: "Point Light Helper Material",
-        });
+        if (this.pointLightHelper) {
+            const mat = (
+                this.pointLightHelper as unknown as { material: THREE.MeshPhysicalMaterial }
+            ).material;
+            const materialFolder = this.guiPane.addFolder({
+                title: "Point Light Helper Material",
+            });
 
-        materialFolder.addBinding(this.pointLightHelper.material, "roughness", {
-            min: 0,
-            max: 1,
-        }).label = "Roughness";
+            materialFolder.addBinding(mat, "roughness", {
+                min: 0,
+                max: 1,
+            }).label = "Roughness";
 
-        materialFolder.addBinding(this.pointLightHelper.material, "metalness", {
-            min: 0,
-            max: 1,
-        }).label = "Metalness";
+            materialFolder.addBinding(mat, "metalness", {
+                min: 0,
+                max: 1,
+            }).label = "Metalness";
 
-        materialFolder.addBinding(this.pointLightHelper.material, "transmission", {
-            min: 0,
-            max: 1,
-        }).label = "Transmission";
+            materialFolder.addBinding(mat, "transmission", {
+                min: 0,
+                max: 1,
+            }).label = "Transmission";
 
-        materialFolder.addBinding(this.pointLightHelper.material, "emissiveIntensity", {
-            min: 0,
-            max: 1,
-        }).label = "Emissive Intensity";
+            materialFolder.addBinding(mat, "emissiveIntensity", {
+                min: 0,
+                max: 1,
+            }).label = "Emissive Intensity";
 
-        materialFolder.addBinding(this.pointLightHelper.material, "ior", {
-            min: 1,
-            max: 2.5,
-        }).label = "IOR";
+            materialFolder.addBinding(mat, "ior", {
+                min: 1,
+                max: 2.5,
+            }).label = "IOR";
 
-        materialFolder.addBinding(this.pointLightHelper.material, "transparent").label =
-            "Transparent";
+            materialFolder.addBinding(mat, "transparent").label = "Transparent";
 
-        materialFolder.addBinding(this.pointLightHelper.material, "emissive").label =
-            "Emissive Color";
+            materialFolder.addBinding(mat, "emissive").label = "Emissive Color";
+        }
+
+        if (this.buildingsMaterial) {
+            const physicalMaterial = this.buildingsMaterial as THREE.MeshPhysicalMaterial;
+
+            const physicalMaterialFolder = this.guiPane.addFolder({
+                title: "Physical Material",
+            });
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "roughness", {
+                min: 0,
+                max: 1,
+            }).label = "Roughness";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "metalness", {
+                min: 0,
+                max: 1,
+            }).label = "Metalness";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "clearcoat", {
+                min: 0,
+                max: 1,
+            }).label = "Clearcoat";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "clearcoatRoughness", {
+                min: 0,
+                max: 1,
+            }).label = "Clearcoat Roughness";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "reflectivity", {
+                min: 0,
+                max: 1,
+            }).label = "Reflectivity";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "transmission", {
+                min: 0,
+                max: 1,
+            }).label = "Transmission";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "ior", {
+                min: 1,
+                max: 2.5,
+            }).label = "IOR";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "sheen", {
+                min: 0,
+                max: 1,
+            }).label = "Sheen";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "emissiveIntensity", {
+                min: 0,
+                max: 1,
+            }).label = "Emissive Intensity";
+
+            physicalMaterialFolder.addBinding(physicalMaterial, "emissive").label =
+                "Emissive Color";
+        }
     }
 
     setupFog() {
@@ -517,34 +581,37 @@ class Scene {
         this.rectLight1 = rectLight1;
         // this.scene.add(rectLight1);
 
-        const rectLight2 = new THREE.RectAreaLight("red", 3, 20, 20);
-        rectLight2.position.set(0, 0, 0);
+        const rectLight2 = new THREE.RectAreaLight("red", 30, 20, 20);
+        rectLight2.position.set(0, 15, 0);
         rectLight2.rotateX(-Math.PI / 2);
         this.rectLight2 = rectLight2;
-        this.scene.add(rectLight2);
+        // this.scene.add(rectLight2);
 
-        const pointLight = new THREE.PointLight("gray", 10, 50);
+        const dirLight = new THREE.DirectionalLight("gray", 1);
+        dirLight.position.set(5, 10, 0);
+        dirLight.target.position.set(0, 0, 0);
+        this.scene.add(dirLight);
+
+        const pointLight = new THREE.PointLight("red", 10, 50);
         this.scene.add(pointLight);
         pointLight.position.y = 5;
         this.pointLight = pointLight;
         const pointLightHelper = new THREE.PointLightHelper(pointLight);
-        pointLightHelper.material = new CustomShaderMaterial({
-            baseMaterial: THREE.MeshPhysicalMaterial,
-            roughness: 0,
-            metalness: 0,
-            transmission: 0.8,
-            emissive: new THREE.Color("blue"),
-            emissiveIntensity: 0.05,
-            ior: 2.2,
-            transparent: true,
-            envMap: null,
-            clearcoat: 0.5,
-        });
+        (pointLightHelper as unknown as { material: CustomShaderMaterial }).material =
+            new CustomShaderMaterial({
+                baseMaterial: THREE.MeshPhysicalMaterial,
+                roughness: 0,
+                metalness: 0,
+                transmission: 0.8,
+                emissive: new THREE.Color("red"),
+                emissiveIntensity: 0.05,
+                ior: 2.2,
+                transparent: true,
+                envMap: null,
+                clearcoat: 0.5,
+            });
+
         this.pointLightHelper = pointLightHelper;
-
-        this.scene.add(pointLightHelper);
-
-        console.log(pointLightHelper);
         this.scene.add(pointLightHelper);
     }
 
@@ -580,9 +647,13 @@ class Scene {
         // make a mesh
         const geometryMerger = new GeometryMerger();
         geometryMerger.gltfLoader = this.gltfLoader;
-        const { mesh: mergedMesh, gltf: gltf } = await geometryMerger.loadAndMergeGeometries(
-            "/city.glb"
-        );
+        const {
+            mesh: mergedMesh,
+            gltf: gltf,
+            material,
+        } = await geometryMerger.loadAndMergeGeometries("/city.glb");
+
+        this.buildingsMaterial = material;
 
         gltf.scene.rotateY(Math.PI);
         mergedMesh.rotateY(Math.PI);
@@ -611,7 +682,7 @@ class Scene {
         matcapTexture.magFilter = THREE.LinearFilter;
         matcapTexture.mapping = THREE.EquirectangularReflectionMapping;
 
-        const material = new THREE.ShaderMaterial({
+        const mat = new THREE.ShaderMaterial({
             side: THREE.DoubleSide,
             uniforms: {
                 time: { value: 0.0 },
@@ -625,7 +696,7 @@ class Scene {
             transparent: true,
         });
 
-        this.makeInstanced(material);
+        this.makeInstanced(mat);
     }
 
     private resize() {
@@ -642,7 +713,7 @@ class Scene {
     clock = new THREE.Clock();
     private animate() {
         if (this.fpsGraph) {
-            this.fpsGraph.begin();
+            (this.fpsGraph as any).begin();
         }
         const elapsedTime = this.clock.getElapsedTime();
         this.gpuCompute.compute();
@@ -690,7 +761,7 @@ class Scene {
         }
 
         if (this.fpsGraph) {
-            this.fpsGraph.end();
+            (this.fpsGraph as any).end();
         }
         this.rafId = requestAnimationFrame(() => this.animate());
     }
@@ -822,6 +893,7 @@ class GeometryMerger {
     async loadAndMergeGeometries(url: string): Promise<{
         gltf: GLTF;
         mesh: THREE.Mesh;
+        material: THREE.Material;
     }> {
         const gltfScene = await this.gltfLoader.loadAsync(url);
         const scene = gltfScene.scene;
@@ -834,9 +906,17 @@ class GeometryMerger {
         matcapTexture.magFilter = THREE.LinearFilter;
         matcapTexture.mapping = THREE.EquirectangularReflectionMapping;
 
-        const material = new THREE.MeshPhongMaterial({
+        const material = new THREE.MeshPhysicalMaterial({
             side: THREE.FrontSide,
             flatShading: true,
+            roughness: 0.23,
+            metalness: 0.63,
+            clearcoat: 0.87,
+            clearcoatRoughness: 1.0,
+            reflectivity: 1.0,
+            transmission: 0,
+            ior: 1,
+            color: new THREE.Color(0x333333),
         });
 
         scene.traverse(child => {
@@ -875,6 +955,7 @@ class GeometryMerger {
         return {
             gltf: gltfScene,
             mesh: new THREE.Mesh(mergedGeometry, material),
+            material,
         };
     }
 }
